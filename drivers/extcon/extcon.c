@@ -190,6 +190,105 @@ struct __extcon_info {
 		.name = "MECHANICAL",
 	},
 
+	/* Samsung connectors */
+	[EXTCON_HV_PREPARE] = {
+		.type = EXTCON_TYPE_MISC,
+		.id = EXTCON_HV_PREPARE,
+		.name = "High Voltage Prepare",
+	},
+	[EXTCON_HV_TA]	 = {
+		.type = EXTCON_TYPE_MISC,
+		.id = EXTCON_NONE,
+		.name = "High Voltage TA",
+	},
+	[EXTCON_HV_TA_ERR] = {
+		.type = EXTCON_TYPE_MISC,
+		.id = EXTCON_HV_TA,
+		.name = "Error HV TA",
+	},
+	[EXTCON_DESKDOCK] = {
+		.type = EXTCON_TYPE_MISC,
+		.id = EXTCON_DESKDOCK,
+		.name = "Desk-dock",
+	},
+	[EXTCON_DESKDOCK_VB] = {
+		.type = EXTCON_TYPE_MISC,
+		.id = EXTCON_DESKDOCK_VB,
+		.name = "Desk-dock-VB",
+	},
+	[EXTCON_AUDIODOCK] = {
+		.type = EXTCON_TYPE_MISC,
+		.id = EXTCON_AUDIODOCK,
+		.name = "Audio-dock",
+	},
+	[EXTCON_SMARTDOCK] = {
+		.type = EXTCON_TYPE_MISC,
+		.id = EXTCON_SMARTDOCK,
+		.name = "Smart-dock",
+	},
+	[EXTCON_SMARTDOCK_TA] = {
+		.type = EXTCON_TYPE_MISC,
+		.id = EXTCON_DOCK,
+		.name = "Smart-dock-TA",
+	},
+	[EXTCON_SMARTDOCK_USB] = {
+		.type = EXTCON_TYPE_MISC,
+		.id = EXTCON_SMARTDOCK_TA,
+		.name = "Smart-dock-USB",
+	},
+	[EXTCON_MULTIMEDIADOCK] = {
+		.type = EXTCON_TYPE_MISC,
+		.id = EXTCON_MULTIMEDIADOCK,
+		.name = "Multimedia-dock",
+	},
+	[EXTCON_JIG_UARTOFF] = {
+		.type = EXTCON_TYPE_MISC,
+		.id = EXTCON_JIG_UARTOFF,
+		.name = "JIG-UART-OFF",
+	},
+	[EXTCON_JIG_UARTOFF_VB] = {
+		.type = EXTCON_TYPE_MISC,
+		.id = EXTCON_JIG_UARTOFF_VB,
+		.name = "JIG-UART-OFF-VB",
+	},
+	[EXTCON_JIG_UARTON] = {
+		.type = EXTCON_TYPE_MISC,
+		.id = EXTCON_JIG_UARTON,
+		.name = "JIG-UART-ON",
+	},
+	[EXTCON_JIG_USBOFF] = {
+		.type = EXTCON_TYPE_MISC,
+		.id = EXTCON_JIG_USBOFF,
+		.name = "JIG-USB-OFF",
+	},
+	[EXTCON_JIG_USBON] = {
+		.type = EXTCON_TYPE_MISC,
+		.id = EXTCON_JIG_USBON,
+		.name = "JIG-USB-ON",
+	},
+	[EXTCON_INCOMPATIBLE] = {
+		.type = EXTCON_TYPE_MISC,
+		.id = EXTCON_INCOMPATIBLE,
+		.name = "Incompatible-TA",
+	},
+	[EXTCON_CHARGING_CABLE] = {
+		.type = EXTCON_TYPE_MISC,
+		.id = EXTCON_CHARGING_CABLE,
+		.name = "Charging-Cable",
+	},
+#if defined(CONFIG_MUIC_SUPPORT_HMT_DETECTION)
+	[EXTCON_HMT] = {
+		.type = EXTCON_TYPE_MISC,
+		.id = EXTCON_HMT,
+		.name = "HMT",
+	},
+#endif
+	[EXTCON_HV_TA_1A] = {
+		.type = EXTCON_TYPE_MISC,
+		.id = EXTCON_HV_TA_1A,
+		.name = "High Voltage 1A Type Cable",
+	},
+
 	{ /* sentinel */ }
 };
 
