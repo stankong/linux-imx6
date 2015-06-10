@@ -48,8 +48,13 @@ static int rfkill_gpio_set_power(void *data, bool blocked)
 	if (!blocked && !IS_ERR(rfkill->clk) && !rfkill->clk_enabled)
 		clk_enable(rfkill->clk);
 
-	gpiod_set_value_cansleep(rfkill->shutdown_gpio, !blocked);
-	gpiod_set_value_cansleep(rfkill->reset_gpio, !blocked);
+	if (blocked) {
+		gpiod_set_value_cansleep(rfkill->shutdown_gpio, 1);
+		gpiod_set_value_cansleep(rfkill->reset_gpio, 1);
+	} else {
+		gpiod_set_value_cansleep(rfkill->reset_gpio, 0);
+		gpiod_set_value_cansleep(rfkill->shutdown_gpio, 0);
+	}
 
 	if (blocked && !IS_ERR(rfkill->clk) && rfkill->clk_enabled)
 		clk_disable(rfkill->clk);
