@@ -254,8 +254,8 @@ int of_mdiobus_register(struct mii_bus *mdio, struct device_node *np)
 				continue;
 
 			/* be noisy to encourage people to set reg property */
-			dev_info(&mdio->dev, "scan phy %s at address %i\n",
-				 child->name, addr);
+			dev_dbg(&mdio->dev, "scan phy %s at address %i\n",
+				child->name, addr);
 
 			if (of_mdiobus_child_is_phy(child))
 				of_mdiobus_register_phy(mdio, child, addr);
