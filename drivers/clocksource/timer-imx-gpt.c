@@ -499,7 +499,9 @@ static int __init mxc_timer_init_dt(struct device_node *np,  enum imx_gpt_type t
 	imxtm->clk_ipg = of_clk_get_by_name(np, "ipg");
 
 	/* Try osc_per first, and fall back to per otherwise */
-	imxtm->clk_per = of_clk_get_by_name(np, "osc_per");
+	imxtm->clk_per = (cpu_is_imx6q() &&
+		imx_get_soc_revision() <= IMX_CHIP_REVISION_1_0) ?
+		ERR_PTR(-ENODEV) : of_clk_get_by_name(np, "osc_per");
 	if (IS_ERR(imxtm->clk_per))
 		imxtm->clk_per = of_clk_get_by_name(np, "per");
 
