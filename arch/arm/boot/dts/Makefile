@@ -345,6 +345,7 @@ dtb-$(CONFIG_SOC_IMX6Q) += \
 	imx6dl-gw552x.dtb \
 	imx6dl-gw553x.dtb \
 	imx6dl-hummingboard.dtb \
+	imx6dl-hp.dtb \
 	imx6dl-mcs.dtb \
 	imx6dl-mtp.dtb \
 	imx6dl-nit6xlite.dtb \
@@ -424,7 +425,6 @@ dtb-$(CONFIG_SOC_IMX6Q) += \
 	imx6q-h100.dtb \
 	imx6q-h4.dtb \
 	imx6q-hummingboard.dtb \
-	imx6dl-hp.dtb \
 	imx6q-icore-rqs.dtb \
 	imx6q-insp.dtb \
 	imx6q-ioc.dtb \
