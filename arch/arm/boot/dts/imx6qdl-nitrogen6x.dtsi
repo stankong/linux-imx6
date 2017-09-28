@@ -345,7 +345,7 @@
 		>;
 	};
 
-	pinctrl_reg_wlan_en: reg-wlan-engrp {
+	pinctrl_reg_wlan_vmmc: reg-wlan-vmmcgrp {
 		fsl,pins = <
 #define GP_REG_WLAN_EN	<&gpio6 15 GPIO_ACTIVE_HIGH>
 			MX6QDL_PAD_NANDF_CS2__GPIO6_IO15	0x030b0
@@ -656,7 +656,7 @@
 			compatible = "regulator-fixed";
 			reg = <4>;
 			pinctrl-names = "default";
-			pinctrl-0 = <&pinctrl_wlan_vmmc>;
+			pinctrl-0 = <&pinctrl_reg_wlan_vmmc>;
 			regulator-name = "reg_wlan_vmmc";
 			regulator-min-microvolt = <3300000>;
 			regulator-max-microvolt = <3300000>;
@@ -742,20 +742,6 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_audmux>;
 	status = "okay";
-};
-
-&can1 {
-	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_can1>;
-	xceiver-supply = <&reg_can_xcvr>;
-	status = "okay";
-};
-
-&clks {
-	assigned-clocks = <&clks IMX6QDL_CLK_LDB_DI0_SEL>,
-			  <&clks IMX6QDL_CLK_LDB_DI1_SEL>;
-	assigned-clock-parents = <&clks IMX6QDL_CLK_PLL3_USB_OTG>,
-				 <&clks IMX6QDL_CLK_PLL3_USB_OTG>;
 };
 
 &can1 {
@@ -1027,10 +1013,6 @@
 		interrupts-extended = GPIRQ_TSC2004;
 		wakeup-gpios = GP_TSC2004;
 	};
-};
-
-&ipu1_di0_disp0 {
-	remote-endpoint = <&lcd_display_in>;
 };
 
 &ldb {
