@@ -381,11 +381,7 @@ static int max77823_irq_init(struct max77823_dev *max77823)
 		irq_set_chip_and_handler(cur_irq, &max77823_irq_chip,
 					 handle_edge_irq);
 		irq_set_nested_thread(cur_irq, 1);
-#ifdef CONFIG_ARM
-		set_irq_flags(cur_irq, IRQF_VALID);
-#else
 		irq_set_noprobe(cur_irq);
-#endif
 	}
 
 	/* Unmask charger and fuelgauge interrupt */
