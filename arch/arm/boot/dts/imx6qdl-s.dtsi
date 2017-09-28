@@ -716,7 +716,7 @@
 };
 
 &i2c3a {
-	hdmi: edid@50 {
+	edid@50 {
 		compatible = "fsl,imx6-hdmi-i2c";
 		reg = <0x50>;
 	};
