@@ -851,11 +851,11 @@ static int i2c_imx_hs_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "can't allocate interface\n");
 		return -ENOMEM;
 	}
-	i2c_imx->scl_gpio = devm_gpiod_get_index(&pdev->dev, "scl", 0);
+	i2c_imx->scl_gpio = devm_gpiod_get_index(&pdev->dev, "scl", 0, GPIOD_IN);
 	if (IS_ERR(i2c_imx->scl_gpio))
 		return -ENODEV;
 
-	i2c_imx->sda_gpio = devm_gpiod_get_index(&pdev->dev, "sda", 0);
+	i2c_imx->sda_gpio = devm_gpiod_get_index(&pdev->dev, "sda", 0, GPIOD_IN);
 	if (IS_ERR(i2c_imx->sda_gpio))
 		return -ENODEV;
 
