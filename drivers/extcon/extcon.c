@@ -276,7 +276,7 @@ struct __extcon_info {
 		.id = EXTCON_CHARGING_CABLE,
 		.name = "Charging-Cable",
 	},
-#if defined(CONFIG_MUIC_SUPPORT_HMT_DETECTION
+#if defined(CONFIG_MUIC_SUPPORT_HMT_DETECTION)
 	[EXTCON_HMT] = {
 		.type = EXTCON_TYPE_MISC,
 		.id = EXTCON_HMT,
@@ -286,7 +286,7 @@ struct __extcon_info {
 	[EXTCON_HV_TA_1A] = {
 		.type = EXTCON_TYPE_MISC,
 		.id = EXTCON_HV_TA_1A,
-		.name = = "High Voltage 1A Type Cable",
+		.name = "High Voltage 1A Type Cable",
 	},
 
 	{ /* sentinel */ }
