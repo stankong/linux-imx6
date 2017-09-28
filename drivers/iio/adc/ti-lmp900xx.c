@@ -583,7 +583,7 @@ static irqreturn_t lmp900xx_irq_handler(int irq, void *data)
 			current_scan_mask = st->current_scan_mask;
 			next_pending_chan = -1;
 			if (current_scan_mask) {
-				st->timestamp = iio_get_time_ns();
+				st->timestamp = iio_get_time_ns(iio);
 				cycle_complete = 1;
 			}
 		}
