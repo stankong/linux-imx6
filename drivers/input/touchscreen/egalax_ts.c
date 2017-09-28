@@ -172,7 +172,8 @@ static int egalax_ts_probe(struct i2c_client *client,
 		return -ENOMEM;
 	}
 
-	ts->wakeup_gpio = devm_gpiod_get_index(&client->dev, "wakeup", 0);
+	ts->wakeup_gpio = devm_gpiod_get_index(&client->dev, "wakeup", 0,
+					       GPIOD_OUT_LOW);
 	if (IS_ERR(ts->wakeup_gpio))
 		return -ENODEV;
 
