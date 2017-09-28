@@ -839,7 +839,7 @@ static void esdhc_prepare_tuning(struct sdhci_host *host, u32 val)
 static void esdhc_post_tuning(struct sdhci_host *host)
 {
 	struct sdhci_pltfm_host *pltfm_host = sdhci_priv(host);
-	struct pltfm_imx_data *imx_data = pltfm_host->priv;
+	struct pltfm_imx_data *imx_data = sdhci_pltfm_priv(pltfm_host);
 	u32 reg;
 
 	reg = readl(host->ioaddr + ESDHC_MIX_CTRL);
