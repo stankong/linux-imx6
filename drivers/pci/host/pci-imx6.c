@@ -1270,13 +1270,14 @@ static int imx6_pcie_probe(struct platform_device *pdev)
 	}
 
 	for (i = 0; i < ARRAY_SIZE(imx6_pcie->reset_gpios); i++) {
-		imx6_pcie->reset_gpios[i] = devm_gpiod_get_index(&pdev->dev, "reset", i);
+		imx6_pcie->reset_gpios[i] = devm_gpiod_get_index(&pdev->dev,
+						"reset", i, GPIOD_OUT_HIGH);
 		if (IS_ERR(imx6_pcie->reset_gpios[i])) {
 			imx6_pcie->reset_gpios[i] = NULL;
 			break;
 		}
-		gpiod_direction_output(imx6_pcie->reset_gpios[i], 1);
-		pr_info("%s: reset gp %d\n", __func__, desc_to_gpio(imx6_pcie->reset_gpios[i]));
+		pr_info("%s: reset gp %d\n", __func__,
+			desc_to_gpio(imx6_pcie->reset_gpios[i]));
 	}
 
 	/* Fetch clocks */
