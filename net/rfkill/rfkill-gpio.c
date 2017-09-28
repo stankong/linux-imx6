@@ -163,14 +163,10 @@ static int rfkill_gpio_probe(struct platform_device *pdev)
 
 	rfkill->shutdown_gpio = gpio;
 
-	gpio = devm_gpiod_get(&pdev->dev, "pulse-on");
-	if (!IS_ERR(gpio)) {
-		ret = gpiod_direction_output(gpio, 0);
-		if (ret)
-			return ret;
-		gpiod_set_value_cansleep(gpio, 0);
+	gpio = devm_gpiod_get(&pdev->dev, "pulse-on", GPIOD_OUT_LOW);
+	if (!IS_ERR(gpio))
 		rfkill->pulse_on_gpio = gpio;
-	}
+
 	ret = of_property_read_u32(pdev->dev.of_node, "pulse-duration",
 			&rfkill->pulse_duration);
 
