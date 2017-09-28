@@ -385,7 +385,7 @@ static irqreturn_t isl28022_irq_handler(int irq, void *data)
 		return IRQ_HANDLED;
 	}
 
-	st->timestamp = iio_get_time_ns();
+	st->timestamp = iio_get_time_ns(iio);
 	ret = i2c_transfer(st->client->adapter, &st->clear_msg, 1);
 	if (ret < 0) {
 		pr_err("%s:ret=%d\n", __func__, ret);
