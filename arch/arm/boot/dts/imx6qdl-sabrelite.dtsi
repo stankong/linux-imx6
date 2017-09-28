@@ -643,20 +643,6 @@
 
 &can1 {
 	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_can1>;
-	xceiver-supply = <&reg_can_xcvr>;
-	status = "okay";
-};
-
-&clks {
-	assigned-clocks = <&clks IMX6QDL_CLK_LDB_DI0_SEL>,
-			  <&clks IMX6QDL_CLK_LDB_DI1_SEL>;
-	assigned-clock-parents = <&clks IMX6QDL_CLK_PLL3_USB_OTG>,
-				 <&clks IMX6QDL_CLK_PLL3_USB_OTG>;
-};
-
-&can1 {
-	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_flexcan1>;
 	trx-stby-gpio = GP_FLEXCAN1_STANDBY;
 	status = "okay";
@@ -980,7 +966,7 @@
 };
 
 &usbotg {
-	vbus-supply = <&reg_usbotg_vbus>;
+	vbus-supply = <&reg_usb_otg_vbus>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_usbotg>;
 	disable-over-current;
