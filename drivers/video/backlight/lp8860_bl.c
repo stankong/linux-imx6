@@ -245,7 +245,8 @@ static int lp8860_backlight_parse_dt(struct device *dev,
 		data->max_brightness--;
 	}
 
-	data->reset_gpio = devm_gpiod_get_index(dev, "reset", 0);
+	data->reset_gpio = devm_gpiod_get_index(dev, "reset", 0,
+						GPIOD_OUT_HIGH);
 	if (IS_ERR(data->reset_gpio)) {
 		if (PTR_ERR(data->reset_gpio) == -EPROBE_DEFER)
 		return -EPROBE_DEFER;
