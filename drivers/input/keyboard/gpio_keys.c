@@ -741,12 +741,9 @@ static int gpio_keys_probe(struct platform_device *pdev)
 	}
 
 #ifdef CONFIG_OF
-	enable_gpio = devm_gpiod_get_index(&pdev->dev, "enable", 0);
+	enable_gpio = devm_gpiod_get_index(&pdev->dev, "enable", 0,
+					   GPIOD_OUT_HIGH);
 	if (!IS_ERR(enable_gpio)) {
-		/* disable (active low) */
-		error = gpiod_direction_output(enable_gpio, 1);
-		if (error)
-			return error;
 		gpiod_set_value(enable_gpio, 0);	/* disable */
 	}
 #endif
