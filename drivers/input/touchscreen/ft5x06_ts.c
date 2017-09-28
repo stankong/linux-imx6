@@ -547,14 +547,11 @@ static int ts_probe(struct i2c_client *client, const struct i2c_device_id *id)
 	ts->client = client;
 	ts->irq = client->irq ;
 
-	gp = devm_gpiod_get_index(dev, "reset", 0);
+	gp = devm_gpiod_get_index(dev, "reset", 0, GPIOD_OUT_HIGH);
 	dev_info(dev, "reset %p\n", gp);
 	if (!IS_ERR(gp)) {
 		/* release reset */
 		ts->reset_gpio = gp;
-		err = gpiod_direction_output(gp, 1);	/* doesn't use active_low flag */
-		if (err)
-			goto exit1;
 		gpiod_set_value(gp, 0);
 		msleep(1);
 	}
@@ -568,7 +565,7 @@ static int ts_probe(struct i2c_client *client, const struct i2c_device_id *id)
 	 * But retry, in case other drivers are not as kind.
 	 */
 	do {
-		wakeup_gpio = devm_gpiod_get_index(dev, "wakeup", 0);
+		wakeup_gpio = devm_gpiod_get_index(dev, "wakeup", 0, GPIOD_IN);
 		if (!IS_ERR(wakeup_gpio))
 			break;
 		msleep(100);
