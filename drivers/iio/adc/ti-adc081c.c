@@ -69,7 +69,7 @@ static irqreturn_t adc081c_event_handler(int irq, void *private)
 	struct iio_dev *iio = private;
 	struct adc081c *adc = iio_priv(iio);
 	struct i2c_client *client = adc->i2c;
-	s64 timestamp = iio_get_time_ns();
+	s64 timestamp = iio_get_time_ns(iio);
 	int ret;
 	enum iio_event_direction dir;
 
@@ -459,7 +459,7 @@ static int adc081c_probe(struct i2c_client *client,
 
 	err = i2c_smbus_write_byte_data(client, ADC081C_CONFIG, 0x00);
 	if (err < 0)
-		goto regulator_disable;
+		goto err_regulator_disable;
 
 	i2c_smbus_write_word_swapped(client, ADC081C_LOW_LIMIT, 0x0);
 	i2c_smbus_write_word_swapped(client, ADC081C_HIGH_LIMIT, 0xff0);
@@ -475,7 +475,7 @@ static int adc081c_probe(struct i2c_client *client,
 						IRQF_ONESHOT,
 						id->name, iio);
 		if (err)
-			goto regulator_disable;
+			goto err_regulator_disable;
 	}
 
 	err = iio_device_register(iio);
