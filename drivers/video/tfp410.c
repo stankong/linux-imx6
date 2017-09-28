@@ -490,12 +490,11 @@ static int tfp410_probe(struct i2c_client *client,
 	if (!gpio_is_valid(gp))
 		return -ENODEV;
 
-	gp_i2c_sel = devm_gpiod_get_index(&client->dev, "i2c_sel", 0);
+	gp_i2c_sel = devm_gpiod_get_index(&client->dev, "i2c_sel", 0,
+					  GPIOD_OUT_LOW);
 	if (!IS_ERR(gp_i2c_sel)) {
-		gpiod_direction_output(gp_i2c_sel, 0);	/* reset */
-		ret = gpiod_direction_output(gp_i2c_sel, 1);	/* enable i2c mode */
-		if (ret)
-			return ret;
+		/* enable i2c mode */
+		gpiod_set_value(gp_i2c_sel, 1);
 	} else {
 		dev_warn(&client->dev, "no i2c_sel pin available");
 	}
