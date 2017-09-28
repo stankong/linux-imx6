@@ -3159,11 +3159,8 @@ static int mxt_probe(struct i2c_client *client, const struct i2c_device_id *id)
 	if (IS_ERR(pdata))
 		return PTR_ERR(pdata);
 
-	gpio = devm_gpiod_get_index(&client->dev, "reset", 0);
+	gpio = devm_gpiod_get_index(&client->dev, "reset", 0, GPIOD_OUT_HIGH);
 	if (!IS_ERR(gpio)) {
-		error = gpiod_direction_output(gpio, 1);	/* inactive */
-		if (error)
-			return error;
 		gpiod_set_value(gpio, 0);	/* inactive */
 		msleep(100);	/* 70 fails, 75 works */
 	}
