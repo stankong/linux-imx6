@@ -256,33 +256,33 @@ static struct lm3643_platform_data *lm3643_parse_dt(struct i2c_client *client)
 	if (!pdata)
 		return ERR_PTR(-ENOMEM);
 
-	pdata->flash_gpio = devm_gpiod_get_index(&client->dev, "flash", 0);
+	pdata->flash_gpio = devm_gpiod_get_index(&client->dev, "flash", 0,
+						 GPIOD_OUT_LOW);
 	if (IS_ERR(pdata->flash_gpio)) {
 		dev_err(&client->dev, "Couldn't find flash gpio\n");
 		return ERR_PTR(-ENODATA);
 	}
-	gpiod_direction_output(pdata->flash_gpio, 0);
 
-	pdata->hwen_gpio = devm_gpiod_get_index(&client->dev, "hwen", 0);
+	pdata->hwen_gpio = devm_gpiod_get_index(&client->dev, "hwen", 0,
+						GPIOD_OUT_HIGH);
 	if (IS_ERR(pdata->hwen_gpio)) {
 		dev_err(&client->dev, "Couldn't find hwen gpio\n");
 		return ERR_PTR(-ENODATA);
 	}
-	gpiod_direction_output(pdata->hwen_gpio, 1);
 
-	pdata->strobe_gpio = devm_gpiod_get_index(&client->dev, "strobe", 0);
+	pdata->strobe_gpio = devm_gpiod_get_index(&client->dev, "strobe", 0,
+						  GPIOD_OUT_LOW);
 	if (IS_ERR(pdata->strobe_gpio)) {
 		dev_err(&client->dev, "Couldn't find strobe gpio\n");
 		return ERR_PTR(-ENODATA);
 	}
-	gpiod_direction_output(pdata->strobe_gpio, 0);
 
-	pdata->torch_gpio = devm_gpiod_get_index(&client->dev, "torch", 0);
+	pdata->torch_gpio = devm_gpiod_get_index(&client->dev, "torch", 0,
+						 GPIOD_OUT_LOW);
 	if (IS_ERR(pdata->torch_gpio)) {
 		dev_err(&client->dev, "Couldn't find torch gpio\n");
 		return ERR_PTR(-ENODATA);
 	}
-	gpiod_direction_output(pdata->torch_gpio, 0);
 
 	return pdata;
 }
