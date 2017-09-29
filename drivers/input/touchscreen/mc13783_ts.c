@@ -141,7 +141,7 @@ static void mc13783_ts_report_sample(struct mc13783_ts_priv *priv)
 	if (!cr0)
 		return;
 exit1:
-	queue_delayed_work(priv->workq, &priv->work, HZ / 50);
+	schedule_delayed_work(&priv->work, HZ / 50);
 }
 
 static void mc13783_ts_work(struct work_struct *work)
