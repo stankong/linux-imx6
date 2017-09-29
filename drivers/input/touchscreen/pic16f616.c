@@ -526,7 +526,7 @@ static int ts_probe(struct i2c_client *client, const struct i2c_device_id *id)
 	sema_init(&ts->sem, 1);
 	ts->client = client;
 	ts->irq = client->irq;
-	ts->wakeup_gpio = devm_gpiod_get_index(dev, "wakeup", 0);
+	ts->wakeup_gpio = devm_gpiod_get_index(dev, "wakeup", 0, GPIOD_IN);
 	if (IS_ERR(ts->wakeup_gpio)) {
 		err = -ENODEV;
 		goto exit1;
