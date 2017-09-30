@@ -65,33 +65,6 @@ static void ftp628_suspend_motors(struct ftp628_data *pdata, int suspend)
 	mdelay(1);
 }
 
-static void ftp628_init_motors(struct ftp628_data *pdata)
-{
-	int i;
-
-	pdata->mt_phase = 0;
-	ftp628_suspend_motors(pdata, 1);
-	for (i = 0; i < ARRAY_SIZE(pdata->mt_ab_gpios); i++)
-		gpiod_direction_output(pdata->mt_ab_gpios[i], 0);
-	gpiod_direction_output(pdata->mt_ate_gpio, 1);
-	for (i = 0; i < ARRAY_SIZE(pdata->mt_dcay_gpios); i++)
-		gpiod_direction_output(pdata->mt_dcay_gpios[i], 0);
-	gpiod_direction_input(pdata->mt_fault_gpio);
-	gpiod_direction_output(pdata->mt_toff_gpio, 0);
-	for (i = 0; i < ARRAY_SIZE(pdata->mt_trq_gpios); i++)
-		gpiod_direction_output(pdata->mt_trq_gpios[i], 0);
-}
-
-static void ftp628_init_printer(struct ftp628_data *pdata)
-{
-	int i;
-
-	gpiod_direction_output(pdata->latch_gpio, 1);
-	gpiod_direction_input(pdata->paper_out_gpio);
-	for (i = 0; i < ARRAY_SIZE(pdata->strobe_gpios); i++)
-		gpiod_direction_output(pdata->strobe_gpios[i], 0);
-}
-
 static void ftp628_motor_next_phase(struct ftp628_data *pdata)
 {
 	struct device *dev = &pdata->spi->dev;
@@ -261,21 +234,22 @@ static int ftp628_probe_dt(struct device *dev, struct ftp628_data *pdata)
 		return -EINVAL;
 	}
 
-	pdata->latch_gpio = devm_gpiod_get(dev, "latch");
+	pdata->latch_gpio = devm_gpiod_get(dev, "latch", GPIOD_OUT_HIGH);
 	if (IS_ERR(pdata->latch_gpio)) {
 		dev_err(dev, "Can't get latch gpio\n");
 		return -ENODEV;
 	}
 
 	for (i = 0; i < ARRAY_SIZE(pdata->mt_ab_gpios); i++) {
-		pdata->mt_ab_gpios[i] = devm_gpiod_get_index(dev, "mt-ab", i);
+		pdata->mt_ab_gpios[i] = devm_gpiod_get_index(dev, "mt-ab", i,
+							     GPIOD_OUT_LOW);
 		if (IS_ERR(pdata->mt_ab_gpios[i])) {
 			dev_err(dev, "Can't get motor ab gpio (%d)\n", i);
 			return -ENODEV;
 		}
 	}
 
-	pdata->mt_ate_gpio = devm_gpiod_get(dev, "mt-ate");
+	pdata->mt_ate_gpio = devm_gpiod_get(dev, "mt-ate", GPIOD_OUT_HIGH);
 	if (IS_ERR(pdata->mt_ate_gpio)) {
 		dev_err(dev, "Can't get motor autotune gpio\n");
 		return -ENODEV;
@@ -283,26 +257,27 @@ static int ftp628_probe_dt(struct device *dev, struct ftp628_data *pdata)
 
 	for (i = 0; i < ARRAY_SIZE(pdata->mt_dcay_gpios); i++) {
 		pdata->mt_dcay_gpios[i] = devm_gpiod_get_index(dev,
-							       "mt-dcay", i);
+							       "mt-dcay", i,
+							       GPIOD_OUT_LOW);
 		if (IS_ERR(pdata->mt_dcay_gpios[i])) {
 			dev_err(dev, "Can't get dcay gpio (%d)\n", i);
 			return -ENODEV;
 		}
 	}
 
-	pdata->mt_fault_gpio = devm_gpiod_get(dev, "mt-fault");
+	pdata->mt_fault_gpio = devm_gpiod_get(dev, "mt-fault", GPIOD_IN);
 	if (IS_ERR(pdata->mt_fault_gpio)) {
 		dev_err(dev, "Can't get motor fault gpio\n");
 		return -ENODEV;
 	}
 
-	pdata->mt_sleep_gpio = devm_gpiod_get(dev, "mt-sleep");
+	pdata->mt_sleep_gpio = devm_gpiod_get(dev, "mt-sleep", GPIOD_OUT_HIGH);
 	if (IS_ERR(pdata->mt_sleep_gpio)) {
 		dev_err(dev, "Can't get motor sleep gpio\n");
 		return -ENODEV;
 	}
 
-	pdata->mt_toff_gpio = devm_gpiod_get(dev, "mt-toff");
+	pdata->mt_toff_gpio = devm_gpiod_get(dev, "mt-toff", GPIOD_OUT_LOW);
 	if (IS_ERR(pdata->mt_toff_gpio)) {
 		dev_err(dev, "Can't get motor toff gpio\n");
 		return -ENODEV;
@@ -310,21 +285,23 @@ static int ftp628_probe_dt(struct device *dev, struct ftp628_data *pdata)
 
 	for (i = 0; i < ARRAY_SIZE(pdata->mt_trq_gpios); i++) {
 		pdata->mt_trq_gpios[i] = devm_gpiod_get_index(dev,
-							      "mt-trq", i);
+							      "mt-trq", i,
+							      GPIOD_OUT_LOW);
 		if (IS_ERR(pdata->mt_trq_gpios[i])) {
 			dev_err(dev, "Can't get motor trq  gpio (%d)\n", i);
 			return -ENODEV;
 		}
 	}
 
-	pdata->paper_out_gpio = devm_gpiod_get(dev, "paper-out");
+	pdata->paper_out_gpio = devm_gpiod_get(dev, "paper-out", GPIOD_IN);
 	if (IS_ERR(pdata->paper_out_gpio)) {
 		dev_err(dev, "Can't get paper out gpio\n");
 		return -ENODEV;
 	}
 
 	for (i = 0; i < ARRAY_SIZE(pdata->strobe_gpios); i++) {
-		pdata->strobe_gpios[i] = devm_gpiod_get_index(dev, "strobe", i);
+		pdata->strobe_gpios[i] = devm_gpiod_get_index(dev, "strobe", i,
+							      GPIOD_OUT_LOW);
 		if (IS_ERR(pdata->strobe_gpios[i])) {
 			dev_err(dev, "Can't get strobe gpio (%d)\n", i);
 			return -ENODEV;
@@ -354,11 +331,9 @@ static int ftp628_probe(struct spi_device *spi)
 	/* Initialize all the values */
 	pdata->motor_delay_us = MOTOR_DELAY_DEFAULT;
 	pdata->strobe_delay_us = STROBE_DELAY_DEFAULT;
+	pdata->mt_phase = 0;
 	pdata->spi = spi;
 	spi_set_drvdata(spi, pdata);
-
-	ftp628_init_motors(pdata);
-	ftp628_init_printer(pdata);
 
 	/* Add misc char device for user-space access */
 	ret = misc_register(&ftp628_device);
