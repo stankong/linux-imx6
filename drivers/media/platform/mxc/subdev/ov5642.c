@@ -5736,9 +5736,11 @@ static int ov5642_try_fmt(struct v4l2_subdev *sd, struct v4l2_mbus_framefmt *mf)
 	return 0;
 }
 
-static int ov5642_s_fmt(struct v4l2_subdev *sd,
-			struct v4l2_mbus_framefmt *mf)
+static int ov5642_set_fmt(struct v4l2_subdev *sd,
+			  struct v4l2_subdev_pad_config *cfg,
+			  struct v4l2_subdev_format *format)
 {
+	struct v4l2_mbus_framefmt *mf = &format->format;
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
 	struct ov5642 *sensor = to_ov5642(client);
 
@@ -5752,12 +5754,13 @@ static int ov5642_s_fmt(struct v4l2_subdev *sd,
 	return 0;
 }
 
-static int ov5642_g_fmt(struct v4l2_subdev *sd,
-			struct v4l2_mbus_framefmt *mf)
+static int ov5642_get_fmt(struct v4l2_subdev *sd,
+			  struct v4l2_subdev_pad_config *cfg,
+			  struct v4l2_subdev_format *format)
 {
+	struct v4l2_mbus_framefmt *mf = &format->format;
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
 	struct ov5642 *sensor = to_ov5642(client);
-
 	const struct ov5642_datafmt *fmt = sensor->fmt;
 
 	mf->code	= fmt->code;
@@ -5767,13 +5770,15 @@ static int ov5642_g_fmt(struct v4l2_subdev *sd,
 	return 0;
 }
 
-static int ov5642_enum_fmt(struct v4l2_subdev *sd, unsigned int index,
-			   u32 *code)
+static int ov5642_enum_code(struct v4l2_subdev *sd,
+			    struct v4l2_subdev_pad_config *cfg,
+			    struct v4l2_subdev_mbus_code_enum *code)
 {
-	if (index >= ARRAY_SIZE(ov5642_colour_fmts))
+	if (code->pad || code->index >= ARRAY_SIZE(ov5642_colour_fmts))
 		return -EINVAL;
 
-	*code = ov5642_colour_fmts[index].code;
+	code->code = ov5642_colour_fmts[code->index].code;
+
 	return 0;
 }
 
@@ -5967,11 +5972,6 @@ static struct v4l2_subdev_video_ops ov5642_subdev_video_ops = {
 	.s_stream = ov5642_s_stream,
 	.g_parm = ov5642_g_parm,
 	.s_parm = ov5642_s_parm,
-
-	.s_mbus_fmt	= ov5642_s_fmt,
-	.g_mbus_fmt	= ov5642_g_fmt,
-	.try_mbus_fmt	= ov5642_try_fmt,
-	.enum_mbus_fmt	= ov5642_enum_fmt,
 };
 
 static struct v4l2_subdev_core_ops ov5642_subdev_core_ops = {
@@ -5985,6 +5985,9 @@ static struct v4l2_subdev_core_ops ov5642_subdev_core_ops = {
 static const struct v4l2_subdev_pad_ops ov5642_pad_ops = {
 	.enum_frame_interval = ov5642_enum_frame_interval,
 	.enum_frame_size = ov5642_enum_frame_size,
+	.enum_mbus_code = ov5642_enum_code,
+	.set_fmt = ov5642_set_fmt,
+	.get_fmt = ov5642_get_fmt,
 };
 
 static struct v4l2_subdev_ops ov5642_subdev_ops = {
