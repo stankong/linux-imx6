@@ -229,7 +229,7 @@ static int gs2971_get_gpios(struct gs2971_priv *gs, struct device *dev)
 	int i;
 
 	for (i = 0; i < GPIO_CNT; i++) {
-		struct gpio_desc *gd = devm_gpiod_get(dev, gpio_names[i]);
+		struct gpio_desc *gd = devm_gpiod_get(dev, gpio_names[i], GPIOD_IN);
 
 		if (IS_ERR(gd)) {
 			pr_info("%s: gpio %s not available\n", __func__, gpio_names[i]);
@@ -238,7 +238,6 @@ static int gs2971_get_gpios(struct gs2971_priv *gs, struct device *dev)
 
 			gs->gpios[i] = gd;
 			if (i >= GPIO_DVB_ASI) {
-				gpiod_direction_input(gd);
 				pr_info("%s: gpio %s input\n", __func__, gpio_names[i]);
 			} else {
 				if (gpiod_is_active_low(gd))
