@@ -62,22 +62,20 @@ static int anx78xx_init_gpio(struct anx78xx *anx78xx)
 	int ret;
 
 	/* gpio for chip power down */
-	pdata->gpiod_pd = devm_gpiod_get(dev, "pd");
+	pdata->gpiod_pd = devm_gpiod_get(dev, "pd", GPIOD_OUT_HIGH);
 	if (IS_ERR(pdata->gpiod_pd)) {
 		dev_err(dev, "unable to claim pd gpio\n");
 		ret = PTR_ERR(pdata->gpiod_pd);
 		return ret;
 	}
-	gpiod_direction_output(pdata->gpiod_pd, 1);
 
 	/* gpio for chip reset */
-	pdata->gpiod_reset = devm_gpiod_get(dev, "reset");
+	pdata->gpiod_reset = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
 	if (IS_ERR(pdata->gpiod_reset)) {
 		dev_err(dev, "unable to claim reset gpio\n");
 		ret = PTR_ERR(pdata->gpiod_reset);
 		return ret;
 	}
-	gpiod_direction_output(pdata->gpiod_reset, 1);
 
 	return 0;
 }
