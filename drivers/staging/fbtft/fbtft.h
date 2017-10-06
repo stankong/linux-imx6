@@ -154,6 +154,7 @@ struct fbtft_platform_data {
 	unsigned int fps;
 	unsigned display_fps;
 	unsigned te_line;
+	int txbuf_cnt;
 	int txbuflen;
 	u8 startbyte;
 	char *gamma;
