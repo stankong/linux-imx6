@@ -1635,12 +1635,9 @@ static int xrm117x_probe_common(struct device *dev,
 			goto out_uart;
 	}
 #endif
-	reset_gpio = devm_gpiod_get_index(dev, "reset", 0);
+	reset_gpio = devm_gpiod_get_index(dev, "reset", 0, GPIOD_OUT_HIGH);
 	if (!IS_ERR(reset_gpio)) {
 		/* release reset */
-		ret = gpiod_direction_output(reset_gpio, 1);
-		if (ret)
-			pr_warn("%s: could not release reset\n", __func__);
 		gpiod_set_value(reset_gpio, 1);        /* assert */
 		udelay(1);
 		gpiod_set_value(reset_gpio, 0);        /* release */
