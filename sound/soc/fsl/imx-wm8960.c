@@ -361,7 +361,7 @@ static int imx_wm8960_late_probe(struct snd_soc_card *card)
 	snd_soc_update_bits(codec, WM8960_ADDCTL4, 7<<4, 3<<4);
 
 	if (data->hp_det[0] > 3) {
-		snd_soc_dapm_enable_pin(&codec->dapm, "Ext Spk");
+		snd_soc_dapm_enable_pin(&card->dapm, "Ext Spk");
 		return 0;
 	}
 	/* Enable headphone jack detect */
