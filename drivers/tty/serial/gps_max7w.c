@@ -550,7 +550,7 @@ static int max7w_probe(struct i2c_client *client, const struct i2c_device_id *id
 	sc->client = client;
 	sc->irq = client->irq ;
 
-	irq_gpio = devm_gpiod_get_index(dev, "wakeup", 0);
+	irq_gpio = devm_gpiod_get_index(dev, "wakeup", 0, GPIOD_IN);
 	if (IS_ERR(irq_gpio))
 		irq_gpio = NULL;
 
