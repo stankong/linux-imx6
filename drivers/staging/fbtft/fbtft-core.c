@@ -422,6 +422,35 @@ static void fbtft_update_display(struct fbtft_par *par, unsigned int start_line,
 	}
 }
 
+static irqreturn_t frame_sync_interrupt(int irq, void *id)
+{
+	struct fb_info *info = id;
+	struct fbtft_par *par = info->par;
+	unsigned dirty_lines_start, dirty_lines_end;
+
+	if (!par->fb_idle_cnt) {
+		par->fb_idle_cnt = 1;
+		return IRQ_HANDLED;
+	}
+	dirty_lines_start = par->dls;
+	dirty_lines_end = par->dle;
+	if (dirty_lines_start <= dirty_lines_end) {
+		/* set display line markers as clean */
+		par->dls = par->info->var.yres - 1;
+		par->dle = 0;
+		par->fb_idle_cnt = 1;
+		par->fbtftops.update_display(info->par,
+			dirty_lines_start, dirty_lines_end);
+		return IRQ_HANDLED;
+	}
+	if (par->fb_idle_cnt++ > FB_IDLE_DISABLE_CNT) {
+		par->fb_idle_cnt = 0;
+		par->irq_enabled = 0;
+		disable_irq_nosync(irq);
+	}
+	return IRQ_HANDLED;
+}
+
 static void fbtft_mkdirty(struct fb_info *info, int y, int height)
 {
 	struct fbtft_par *par = info->par;
