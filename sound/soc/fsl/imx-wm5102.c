@@ -41,7 +41,9 @@ static int wm5102_set_bias_level(struct snd_soc_card *card,
 				struct snd_soc_dapm_context *dapm,
 				enum snd_soc_bias_level level)
 {
-	struct snd_soc_dai *codec_dai = card->rtd[DAI_AIF1].codec_dai;
+	struct snd_soc_pcm_runtime *rtd = list_first_entry(
+		&card->rtd_list, struct snd_soc_pcm_runtime, list);
+	struct snd_soc_dai *codec_dai = rtd->codec_dai;
 	struct snd_soc_codec *codec = codec_dai->codec;
 	struct imx_wm5102_data *wm5102 = card->drvdata;
 	int ret;
@@ -82,7 +84,9 @@ static int wm5102_set_bias_level_post(struct snd_soc_card *card,
 				     struct snd_soc_dapm_context *dapm,
 				     enum snd_soc_bias_level level)
 {
-	struct snd_soc_dai *codec_dai = card->rtd[DAI_AIF1].codec_dai;
+	struct snd_soc_pcm_runtime *rtd = list_first_entry(
+		&card->rtd_list, struct snd_soc_pcm_runtime, list);
+	struct snd_soc_dai *codec_dai = rtd->codec_dai;
 	struct snd_soc_codec *codec = codec_dai->codec;
 	struct imx_wm5102_data *wm5102 = card->drvdata;
 	int ret;
@@ -120,8 +124,10 @@ static int wm5102_set_bias_level_post(struct snd_soc_card *card,
 static int wm5102_late_probe(struct snd_soc_card *card)
 {
 	struct imx_wm5102_data *wm5102 = card->drvdata;
-	struct snd_soc_codec *codec = card->rtd[DAI_AIF1].codec;
-	struct snd_soc_dai *aif1_dai = card->rtd[DAI_AIF1].codec_dai;
+	struct snd_soc_pcm_runtime *rtd = list_first_entry(
+		&card->rtd_list, struct snd_soc_pcm_runtime, list);
+	struct snd_soc_dai *aif1_dai = rtd->codec_dai;
+	struct snd_soc_codec *codec = rtd->codec;
 	int ret;
 
 	ret = snd_soc_codec_set_sysclk(codec, ARIZONA_CLK_SYSCLK,
