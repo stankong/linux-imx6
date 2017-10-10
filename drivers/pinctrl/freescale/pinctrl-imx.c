@@ -25,6 +25,7 @@
 #include <linux/pinctrl/pinmux.h>
 #include <linux/slab.h>
 #include <linux/regmap.h>
+#include <soc/imx/revision.h>
 
 #include "../core.h"
 #include "pinctrl-imx.h"
@@ -210,19 +211,24 @@ static int imx_pmx_set(struct pinctrl_dev *pctldev, unsigned selector,
 		pin_id = pin->pin;
 		pin_reg = &info->pin_regs[pin_id];
 
-		if (pin_reg->mux_reg == -1) {
-			if (info->flags & SHARE_MUX_CONF_REG) {
-				u32 reg;
-				reg = readl(ipctl->base + pin_reg->mux_reg);
-				reg &= ~info->mux_mask;
-				reg |= (pin->mux_mode << mux_shift);
-				writel(reg, ipctl->base + pin_reg->mux_reg);
-			} else {
-				writel(pin->mux_mode, ipctl->base + pin_reg->mux_reg);
-			}
-			dev_dbg(ipctl->dev, "write: offset 0x%x val 0x%x\n",
-				pin_reg->mux_reg, pin->mux_mode);
+		if ((pin_reg->mux_reg == -1) &&
+		    (mx51_revision() == IMX_CHIP_REVISION_UNKNOWN)) {
+			dev_dbg(ipctl->dev, "Pin(%s) does not support mux function\n",
+				info->pins[pin_id].name);
+			continue;
 		}
+
+		if (info->flags & SHARE_MUX_CONF_REG) {
+			u32 reg;
+			reg = readl(ipctl->base + pin_reg->mux_reg);
+			reg &= ~info->mux_mask;
+			reg |= (pin->mux_mode << mux_shift);
+			writel(reg, ipctl->base + pin_reg->mux_reg);
+		} else {
+			writel(pin->mux_mode, ipctl->base + pin_reg->mux_reg);
+		}
+		dev_dbg(ipctl->dev, "write: offset 0x%x val 0x%x\n",
+			pin_reg->mux_reg, pin->mux_mode);
 
 		/*
 		 * If the select input value begins with 0xff, it's a quirky
