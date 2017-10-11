@@ -210,7 +210,7 @@ static int imx_pmx_set(struct pinctrl_dev *pctldev, unsigned selector,
 		pin_id = pin->pin;
 		pin_reg = &info->pin_regs[pin_id];
 
-		if (pin_reg->mux_reg == -1) {
+		if (pin_reg->mux_reg != -1) {
 			if (info->flags & SHARE_MUX_CONF_REG) {
 				u32 reg;
 				reg = readl(ipctl->base + pin_reg->mux_reg);
