@@ -586,6 +586,7 @@ static void imx6_pcie_deassert_core_reset(struct imx6_pcie *imx6_pcie)
 	activate_reset(imx6_pcie);
 	if (imx6_pcie->reset_gpios[0])
 		mdelay(20);
+	deactivate_reset(imx6_pcie);
 
 	if (imx6_pcie->force_detect_state) {
 		u32 val;
@@ -1297,14 +1298,15 @@ static int imx6_pcie_probe(struct platform_device *pdev)
 	}
 
 	for (i = 0; i < ARRAY_SIZE(imx6_pcie->reset_gpios); i++) {
-		imx6_pcie->reset_gpios[i] = devm_gpiod_get_index(&pdev->dev,
-						"reset", i, GPIOD_OUT_HIGH);
-		if (IS_ERR(imx6_pcie->reset_gpios[i])) {
-			imx6_pcie->reset_gpios[i] = NULL;
+		struct gpio_desc *gd = devm_gpiod_get_index(&pdev->dev, "reset", i,
+					   GPIOD_OUT_HIGH);
+
+		if (PTR_ERR(gd) == -EPROBE_DEFER)
+			return -EPROBE_DEFER;
+		if (IS_ERR(gd))
 			break;
-		}
-		pr_info("%s: reset gp %d\n", __func__,
-			desc_to_gpio(imx6_pcie->reset_gpios[i]));
+		imx6_pcie->reset_gpios[i] = gd;
+		pr_info("%s: reset gp %d\n", __func__, desc_to_gpio(gd));
 	}
 
 	/* Fetch clocks */
