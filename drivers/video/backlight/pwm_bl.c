@@ -56,11 +56,11 @@ static void set_gpios(struct gpio_descs *d, int active)
 		for (i = 0; i < d->ndescs; i++) {
 			if (i)
 				msleep(10);
-			gpiod_set_value(d->desc[i], active);
+			gpiod_set_value_cansleep(d->desc[i], active);
 		}
 	} else {
 		for (i = d->ndescs - 1; i >= 0 ; i--) {
-			gpiod_set_value(d->desc[i], active);
+			gpiod_set_value_cansleep(d->desc[i], active);
 			if (i)
 				msleep(10);
 		}
