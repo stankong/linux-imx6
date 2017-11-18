@@ -124,7 +124,6 @@ struct fbtft_display {
 	struct fbtft_ops fbtftops;
 	unsigned int bpp;
 	unsigned int fps;
-	int txbuf_cnt;
 	int txbuflen;
 	int *init_sequence;
 	char *gamma;
@@ -148,12 +147,12 @@ struct fbtft_display {
 struct fbtft_platform_data {
 	struct fbtft_display display;
 	const struct fbtft_gpio *gpios;
-	int gpio_int;
 	unsigned int rotate;
 	bool bgr;
 	unsigned int fps;
-	unsigned display_fps;
-	unsigned te_line;
+	int gpio_int;
+	unsigned int display_fps;
+	unsigned int te_line;
 	int txbuf_cnt;
 	int txbuflen;
 	u8 startbyte;
@@ -251,14 +250,14 @@ struct fbtft_par {
 	unsigned int dirty_lines_start;
 	unsigned int dirty_lines_end;
 	unsigned long irq_enabled;
-	unsigned irq;
+	unsigned int irq;
 	int gpio_int;
-	unsigned dls;
-	unsigned dle;
-	unsigned display_fps;
-	unsigned te_line;
+	unsigned int dls;
+	unsigned int dle;
+	unsigned int display_fps;
+	unsigned int te_line;
 #define FB_IDLE_DISABLE_CNT	6
-	unsigned fb_idle_cnt;
+	unsigned int fb_idle_cnt;
 	struct {
 		int reset;
 		int dc;

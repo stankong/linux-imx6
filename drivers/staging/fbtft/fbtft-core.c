@@ -682,10 +682,13 @@ int alloc_txbuf(struct txbuf *txbuf, struct device *dev, struct fbtft_par *par, 
 {
 	void *buf = NULL;
 
+#ifdef CONFIG_HAS_DMA
 	if (dma) {
 		dev->coherent_dma_mask = ~0;
 		buf = dmam_alloc_coherent(dev, len, &txbuf->dma, GFP_DMA);
-	} else {
+	} else
+#endif
+	{
 		buf = devm_kzalloc(dev, len, GFP_KERNEL);
 	}
 	if (!buf)
@@ -922,7 +925,6 @@ struct fb_info *fbtft_framebuffer_alloc(struct fbtft_display *display,
 			}
 		}
 	}
-
 	/* Initialize gpios to disabled */
 	par->gpio.reset = -1;
 	par->gpio.dc = -1;
