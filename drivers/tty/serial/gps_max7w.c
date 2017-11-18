@@ -565,14 +565,13 @@ static int max7w_probe(struct i2c_client *client, const struct i2c_device_id *id
 			int_pio, desc_to_gpio(irq_gpio),
 			gpiod_is_active_low(irq_gpio));
 	}
-	reset_gpio = devm_gpiod_get_index(dev, "reset", 0, GPIOD_OUT_LOW);
+	reset_gpio = devm_gpiod_get_index(dev, "reset", 0, GPIOD_OUT_HIGH);
 	if (IS_ERR(reset_gpio)) {
 		ret = PTR_ERR(reset_gpio);
 		dev_err(&client->dev, "reset failed: %d\n", ret);
 		goto out1;
 	}
 	dev_err(&client->dev, "reset is %d\n", desc_to_gpio(reset_gpio));
-	gpiod_set_value(reset_gpio, 1);
 	sc->irq_gpio = irq_gpio;
 	sc->reset_gpio = reset_gpio;
 
