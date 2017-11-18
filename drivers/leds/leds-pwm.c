@@ -317,7 +317,7 @@ static int led_pwm_add(struct device *dev, struct led_pwm_priv *priv,
 	led_data->cdev.max_brightness = led->max_brightness;
 	led_data->cdev.flags = LED_CORE_SUSPENDRESUME;
 	led_data->octave = 4;
-	led_data->period = led_data->period;
+	led_data->period = led_data->pwm->state.period;
 
 	if (child)
 		led_data->pwm = devm_of_pwm_get(dev, child, NULL);
