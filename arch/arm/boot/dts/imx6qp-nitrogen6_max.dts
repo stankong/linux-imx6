@@ -50,7 +50,7 @@
 	compatible = "boundary,imx6qp-nitrogen6_max", "fsl,imx6qp";
 
 	memory: memory {
-		reg = <0x10000000 0x80000000>;
+		reg = <0x10000000 0xeffffc00>;
 	};
 };
 
