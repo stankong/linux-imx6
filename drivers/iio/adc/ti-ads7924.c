@@ -475,11 +475,13 @@ static int ads7924_probe(struct i2c_client *client,
 		return ret;
 
 	/* Get reset pin and initialize it */
-	ads->reset_gpio = devm_gpiod_get(&client->dev, "reset", GPIOD_OUT_LOW);
+	ads->reset_gpio = devm_gpiod_get(&client->dev, "reset", GPIOD_OUT_HIGH);
 	if (IS_ERR(ads->reset_gpio)) {
 		dev_err(&client->dev, "Can't get reset gpio\n");
 		return PTR_ERR(ads->reset_gpio);
 	}
+	udelay(1);
+	gpiod_set_value(ads->reset_gpio, 0);
 	/* wait a little after reset released */
 	msleep(2);
 
