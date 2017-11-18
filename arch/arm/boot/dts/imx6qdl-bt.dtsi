@@ -678,7 +678,7 @@
 		reg = <0x50>;
 	};
 	
-	sc16is7xx: sc16is7xx@49 {
+	sc16is7xx@49 {
 		compatible = "nxp,sc16is7xx-uart";
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_sc16is7xx>;
