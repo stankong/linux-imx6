@@ -875,8 +875,6 @@ static const struct flash_info spi_nor_ids[] = {
 
 	/* ISSI */
 	{ "is25cd512", INFO(0x7f9d20, 0, 32 * 1024,   2, SECT_4K) },
-
-	/* ISSI */
 	{ "is25lp032", INFO(0x9d6016, 0, 64 * 1024,  64, SECT_4K) },
 	{ "is25lp064", INFO(0x9d6017, 0, 64 * 1024, 128, SECT_4K) },
 	{ "is25lp128", INFO(0x9d6018, 0, 64 * 1024, 256, SECT_4K) },
