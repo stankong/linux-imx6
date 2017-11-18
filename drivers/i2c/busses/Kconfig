@@ -597,16 +597,6 @@ config I2C_IMX
 	  This driver can also be built as a module.  If so, the module
 	  will be called i2c-imx.
 
-config I2C_IMX_LPI2C
-	tristate "IMX Low Power I2C interface"
-	depends on ARCH_MXC || COMPILE_TEST
-	help
-          Say Y here if you want to use the Low Power IIC bus controller
-          on the Freescale i.MX processors.
-
-          This driver can also be built as a module. If so, the module
-          will be called i2c-imx-lpi2c.
-
 config I2C_IMX_HS
 	tristate "IMX I2C-hs interface"
 	depends on ARCH_MXC
@@ -617,6 +607,16 @@ config I2C_IMX_HS
 
 	  This driver can also be built as a module.  If so, the module
 	  will be called i2c-imx-hs.
+
+config I2C_IMX_LPI2C
+	tristate "IMX Low Power I2C interface"
+	depends on ARCH_MXC || COMPILE_TEST
+	help
+          Say Y here if you want to use the Low Power IIC bus controller
+          on the Freescale i.MX processors.
+
+          This driver can also be built as a module. If so, the module
+          will be called i2c-imx-lpi2c.
 
 config I2C_IOP3XX
 	tristate "Intel IOPx3xx and IXP4xx on-chip I2C interface"
