@@ -1320,7 +1320,7 @@
 
 &uart3 {
 	/* Bluetooth */
-	fsl,uart-has-rtscts;
+	uart-has-rtscts;
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_uart3>;
 	status = "okay";
