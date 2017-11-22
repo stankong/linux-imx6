@@ -630,13 +630,16 @@
 	pinctrl-0 = <&pinctrl_i2c1>;
 	status = "okay";
 
-	rv4162@68 {
+	rv4162: rv4162@68 {
 		compatible = "microcrystal,rv4162";
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_i2c1_rv4162>;
 		reg = <0x68>;
-		clkout = <32768>;
 		interrupts-extended = GPIRQ_RTC_RV4162;
+		/* clock provider */
+		#clock-cells = <1>;
+		clock-frequency  = <32678>;
+		clock-output-names = "rv4162-sqw";
 	};
 };
 
