@@ -936,8 +936,7 @@ int TW68_s_ctrl_internal(struct TW68_dev *dev,  struct TW68_fh *fh, struct v4l2_
 {
 	const struct v4l2_queryctrl* ctrl;
 	int restart_overlay = 0;
-	int DMA_nCH, nId;
-	int err = 0;
+	int DMA_nCH, nId, err;
 	int regval =0;;
 	DMA_nCH = fh->DMA_nCH;
 	nId = (DMA_nCH +1)& 0xF;
@@ -1058,9 +1057,9 @@ int TW68_s_ctrl_internal(struct TW68_dev *dev,  struct TW68_fh *fh, struct v4l2_
 		break;
 	}
 	default:
-		err = -ENOTSUPP;
 		goto error;
 	}
+	err = 0;
 	pr_debug("%s: set_control name=%s REAL val=%d   reg  0x%X\n",
 		__func__, ctrl->name,c->value,  regval);
 
