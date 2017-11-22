@@ -794,7 +794,7 @@
 	sound-gsm {
 		compatible = "fsl,imx6q-ls-gsm",
 			     "fsl,imx-audio-gsm";
-		model = "imx6q-ls-sgtl5000";
+		model = "sgtl5000-audio";
 		ssi-controller = <&ssi1>;
 		mux-int-port = <1>;
 		mux-ext-port = <3>;
