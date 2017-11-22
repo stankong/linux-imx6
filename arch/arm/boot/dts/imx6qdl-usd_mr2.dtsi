@@ -481,7 +481,7 @@
 	sound_a {
 		compatible = "fsl,imx6q-usd-sgtl5000",
 			     "fsl,imx-audio-sgtl5000";
-		model = "imx6q-usd-sgtl5000a";
+		model = "sgtl5000-audio-a";
 		ssi-controller = <&ssi1>;
 		audio-codec = <&sgtl5000a>;
 		audio-routing =
@@ -505,7 +505,7 @@
 	sound_b {
 		compatible = "fsl,imx6q-usd-sgtl5000",
 			     "fsl,imx-audio-sgtl5000";
-		model = "imx6q-usd-sgtl5000b";
+		model = "sgtl5000-audio-b";
 		ssi-controller = <&ssi2>;
 		audio-codec = <&sgtl5000b>;
 		audio-routing =
