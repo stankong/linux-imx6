@@ -1454,8 +1454,6 @@ static int mxsfb_dispdrv_init(struct platform_device *pdev,
 	setting.fbi = fbi;
 	memcpy(disp_dev, host->disp_dev, strlen(host->disp_dev));
 	disp_dev[strlen(host->disp_dev)] = '\0';
-	if (!disp_dev[0])
-		return -ENODEV;
 
 	/* Use videomode name from dtb, if any given */
 	if (host->disp_videomode) {
