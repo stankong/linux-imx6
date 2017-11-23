@@ -184,6 +184,16 @@
 	};
 };
 
+&adc1 {
+	vref-supply = <&reg_vref_1v8>;
+	status = "okay";
+};
+
+&adc2 {
+	vref-supply = <&reg_vref_1v8>;
+	status = "okay";
+};
+
 &clks {
 	assigned-clocks = <&clks IMX7D_CLKO2_ROOT_SRC>,
 			  <&clks IMX7D_CLKO2_ROOT_DIV>,
@@ -194,20 +204,6 @@
 
 &cpu0 {
 	arm-supply = <&sw1a_reg>;
-};
-
-&epxp {
-	status = "okay";
-};
-
-&adc1 {
-	vref-supply = <&reg_vref_1v8>;
-	status = "okay";
-};
-
-&adc2 {
-	vref-supply = <&reg_vref_1v8>;
-	status = "okay";
 };
 
 &csi1 {
@@ -221,36 +217,8 @@
 	};
 };
 
-&qspi1 {
-	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_flash>;
+&epxp {
 	status = "okay";
-
-	flash: m25p80@0 {
-		compatible = "winbond,w25q128";
-		spi-max-frequency = <20000000>;
-		reg = <0>;
-		#address-cells = <1>;
-		#size-cells = <1>;
-		partition@0 {
-			label = "U-Boot";
-			reg = <0x0 0xC0000>;
-			read-only;
-		};
-		partition@C0000 {
-			label = "U-Boot Env";
-			reg = <0xC0000 0x2000>;
-			read-only;
-		};
-		partition@C2000 {
-			label = "Kernel";
-			reg = <0xC2000 0x11e000>;
-		};
-		partition@1E0000 {
-			label = "M4";
-			reg = <0x1E0000 0x20000>;
-		};
-	};
 };
 
 &fec1 {
@@ -285,6 +253,38 @@
 	pinctrl-0 = <&pinctrl_flexcan2>;
 	trx-stby-gpio = <&gpio2 14 GPIO_ACTIVE_HIGH>;
 	status = "okay";
+};
+
+&qspi1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_flash>;
+	status = "okay";
+
+	flash: m25p80@0 {
+		compatible = "winbond,w25q128";
+		spi-max-frequency = <20000000>;
+		reg = <0>;
+		#address-cells = <1>;
+		#size-cells = <1>;
+		partition@0 {
+			label = "U-Boot";
+			reg = <0x0 0xC0000>;
+			read-only;
+		};
+		partition@C0000 {
+			label = "U-Boot Env";
+			reg = <0xC0000 0x2000>;
+			read-only;
+		};
+		partition@C2000 {
+			label = "Kernel";
+			reg = <0xC2000 0x11e000>;
+		};
+		partition@1E0000 {
+			label = "M4";
+			reg = <0x1E0000 0x20000>;
+		};
+	};
 };
 
 &i2c1 {
