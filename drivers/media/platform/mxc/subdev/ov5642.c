@@ -3769,9 +3769,17 @@ error:
 	return ret;
 }
 
-static int ov5642_try_fmt(struct v4l2_subdev *sd, struct v4l2_mbus_framefmt *mf)
+static int ov5642_set_fmt(struct v4l2_subdev *sd,
+			  struct v4l2_subdev_pad_config *cfg,
+			  struct v4l2_subdev_format *format)
 {
+	struct v4l2_mbus_framefmt *mf = &format->format;
 	const struct ov5642_datafmt *fmt = ov5642_find_datafmt(mf->code);
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	struct ov5642 *sensor = to_ov5642(client);
+
+	if (format->pad)
+		return -EINVAL;
 
 	if (!fmt) {
 		mf->code	= ov5642_colour_fmts[0].code;
@@ -3780,23 +3788,10 @@ static int ov5642_try_fmt(struct v4l2_subdev *sd, struct v4l2_mbus_framefmt *mf)
 
 	mf->field	= V4L2_FIELD_NONE;
 
-	return 0;
-}
+	if (format->which == V4L2_SUBDEV_FORMAT_TRY)
+		return 0;
 
-static int ov5642_set_fmt(struct v4l2_subdev *sd,
-			  struct v4l2_subdev_pad_config *cfg,
-			  struct v4l2_subdev_format *format)
-{
-	struct v4l2_mbus_framefmt *mf = &format->format;
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
-	struct ov5642 *sensor = to_ov5642(client);
-
-	/* MIPI CSI could have changed the format, double-check */
-	if (!ov5642_find_datafmt(mf->code))
-		return -EINVAL;
-
-	ov5642_try_fmt(sd, mf);
-	sensor->fmt = ov5642_find_datafmt(mf->code);
+	sensor->fmt = fmt;
 
 	return 0;
 }
@@ -3809,6 +3804,9 @@ static int ov5642_get_fmt(struct v4l2_subdev *sd,
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
 	struct ov5642 *sensor = to_ov5642(client);
 	const struct ov5642_datafmt *fmt = sensor->fmt;
+
+	if (format->pad)
+		return -EINVAL;
 
 	mf->code	= fmt->code;
 	mf->colorspace	= fmt->colorspace;
