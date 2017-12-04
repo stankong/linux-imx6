@@ -3841,7 +3841,7 @@ static int ov5642_enum_frame_size(struct v4l2_subdev *sd,
 				  struct v4l2_subdev_pad_config *cfg,
 				  struct v4l2_subdev_frame_size_enum *fse)
 {
-	pr_info("%s:%d of %d\n", __func__, fse->index, ov5642_mode_MAX);
+	pr_debug("%s:%d of %d\n", __func__, fse->index, ov5642_mode_MAX);
 	if (fse->index > ov5642_mode_MAX)
 		return -EINVAL;
 
@@ -3851,6 +3851,7 @@ static int ov5642_enum_frame_size(struct v4l2_subdev *sd,
 	fse->min_height = fse->max_height =
 			max(ov5642_mode_info_data[0][fse->index].height,
 			    ov5642_mode_info_data[1][fse->index].height);
+
 	return 0;
 }
 
@@ -3902,7 +3903,7 @@ static void setup_sensor_clk(struct ov5642 *sensor)
 	u32 tgt_xclk;	/* target xclk */
 
 	tgt_xclk = clk_get_rate(sensor->sensor_clk);
-	pr_info("   current mclk %d Hz\n", tgt_xclk);
+	pr_debug("   current mclk %d Hz\n", tgt_xclk);
 
 	/* mclk */
 	tgt_xclk = sensor->mclk;
@@ -3910,10 +3911,10 @@ static void setup_sensor_clk(struct ov5642 *sensor)
 	tgt_xclk = max(tgt_xclk, (u32)OV5642_XCLK_MIN);
 	sensor->mclk = tgt_xclk;
 
-	pr_info("   Setting mclk to %d Hz\n", tgt_xclk);
+	pr_debug("   Setting mclk to %d Hz\n", tgt_xclk);
 	clk_set_rate(sensor->sensor_clk, sensor->mclk);
 	tgt_xclk = clk_get_rate(sensor->sensor_clk);
-	pr_info("   Set mclk to %d Hz\n", tgt_xclk);
+	pr_debug("   Set mclk to %d Hz\n", tgt_xclk);
 }
 
 /*!
@@ -4112,14 +4113,14 @@ static int ov5642_probe(struct i2c_client *client,
 	ov5642_standby(0);
 
 	retval = ov5642_read_reg(OV5642_CHIP_ID_HIGH_BYTE, &chip_id_high);
-	pr_info("retval=%d, %x\n", retval, chip_id_high);
+	pr_debug("retval=%d, %x\n", retval, chip_id_high);
 	if (retval < 0 || chip_id_high != 0x56) {
 		pr_warning("camera ov5642 is not found\n");
 		clk_disable_unprepare(sensor->sensor_clk);
 		return -ENODEV;
 	}
 	retval = ov5642_read_reg(OV5642_CHIP_ID_LOW_BYTE, &chip_id_low);
-	pr_info("retval=%d, %x\n", retval, chip_id_low);
+	pr_debug("retval=%d, %x\n", retval, chip_id_low);
 	if (retval < 0 || chip_id_low != 0x42) {
 		pr_warning("camera ov5642 is not found\n");
 		clk_disable_unprepare(sensor->sensor_clk);
