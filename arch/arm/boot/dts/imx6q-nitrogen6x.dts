@@ -27,30 +27,18 @@
 	csi_id = <1>;
 };
 
-&hdmi_core {
-	ipu_id = <1>;
-};
-
-&ov5640 {
-	ipu_id = <1>;
-};
-
-&ov5640_mipi {
-	ipu_id = <1>;
-	csi_id = <0>;
-};
 
 &pinctrl_i2c3_adv7180 {
 	fsl,pins = <
-		MX6QDL_PAD_EIM_A17__IPU2_CSI1_DATA12	0xb0b1
-		MX6QDL_PAD_EIM_A18__IPU2_CSI1_DATA13	0xb0b1
-		MX6QDL_PAD_EIM_A19__IPU2_CSI1_DATA14	0xb0b1
-		MX6QDL_PAD_EIM_A20__IPU2_CSI1_DATA15	0xb0b1
-		MX6QDL_PAD_EIM_A21__IPU2_CSI1_DATA16	0xb0b1
-		MX6QDL_PAD_EIM_A22__IPU2_CSI1_DATA17	0xb0b1
-		MX6QDL_PAD_EIM_A23__IPU2_CSI1_DATA18	0xb0b1
-		MX6QDL_PAD_EIM_EB2__IPU2_CSI1_DATA19	0xb0b1
-		MX6QDL_PAD_EIM_A16__IPU2_CSI1_PIXCLK	0xb0b1
+		MX6QDL_PAD_EIM_A16__IPU2_CSI1_PIXCLK     0xb0b1
+		MX6QDL_PAD_EIM_A17__IPU2_CSI1_DATA12  	 0xb0b1
+		MX6QDL_PAD_EIM_A18__IPU2_CSI1_DATA13   	 0xb0b1
+		MX6QDL_PAD_EIM_A19__IPU2_CSI1_DATA14     0xb0b1
+		MX6QDL_PAD_EIM_A20__IPU2_CSI1_DATA15     0xb0b1
+		MX6QDL_PAD_EIM_A21__IPU2_CSI1_DATA16     0xb0b1
+		MX6QDL_PAD_EIM_A22__IPU2_CSI1_DATA17     0xb0b1
+		MX6QDL_PAD_EIM_A23__IPU2_CSI1_DATA18     0xb0b1
+		MX6QDL_PAD_EIM_A24__IPU2_CSI1_DATA19     0xb0b1
        >;
 };
 
@@ -61,36 +49,26 @@
 	>;
 };
 
-&pinctrl_i2c3_ov5640 { /* parallel camera */
-	fsl,pins = <
-		MX6QDL_PAD_EIM_A17__IPU2_CSI1_DATA12	0xb0b1
-		MX6QDL_PAD_EIM_A18__IPU2_CSI1_DATA13	0xb0b1
-		MX6QDL_PAD_EIM_A19__IPU2_CSI1_DATA14	0xb0b1
-		MX6QDL_PAD_EIM_A20__IPU2_CSI1_DATA15	0xb0b1
-		MX6QDL_PAD_EIM_A21__IPU2_CSI1_DATA16	0xb0b1
-		MX6QDL_PAD_EIM_A22__IPU2_CSI1_DATA17	0xb0b1
-		MX6QDL_PAD_EIM_A23__IPU2_CSI1_DATA18	0xb0b1
-		MX6QDL_PAD_EIM_EB2__IPU2_CSI1_DATA19	0xb0b1
-		MX6QDL_PAD_EIM_DA10__IPU2_CSI1_DATA_EN	0xb0b1
-		MX6QDL_PAD_EIM_A16__IPU2_CSI1_PIXCLK	0xb0b1
-		MX6QDL_PAD_EIM_DA11__IPU2_CSI1_HSYNC	0xb0b1
-		MX6QDL_PAD_EIM_DA12__IPU2_CSI1_VSYNC	0xb0b1
-	>;
-};
 
 &sata {
-	status = "okay";
+	status = "disabled";
+};
+
+&v4l2_cap_0 {
+	ipu_id = <0>;
+	csi_id = <0>;
 };
 
 /* ov5640_mipi */
 &v4l2_cap_1 {
-	ipu_id = <1>;
-	csi_id = <0>;
-	mipi_camera = <1>;
+	status = "disabled";
 };
 
 /* adv7180, ov5640 */
 &v4l2_cap_2 {
-	ipu_id = <1>;
-	csi_id = <1>;
+	status = "disabled";
+};
+
+&v4l2_cap_3 {
+	status = "disabled";
 };
