@@ -2512,7 +2512,95 @@ static long mxc_v4l_do_ioctl(struct file *file,
 	case VIDIOC_S_CHIP_INPUT: {
 
 		int *input = arg;
+		struct mxc_v4l_frame *frame;
+		unsigned long lock_flags;
+		int err = 0;
+
 		vidioc_int_s_chip_input(cam->sensor, input);
+
+		//close stream
+		/* For both CSI--MEM and CSI--IC--MEM
+		* 1. wait for idmac eof
+		* 2. disable csi first
+		* 3. disable idmac
+		* 4. disable smfc (CSI--MEM channel)
+		*/
+		if (mxc_capture_inputs[cam->current_input].name != NULL) {
+			if (cam->enc_disable_csi) {
+				err = cam->enc_disable_csi(cam);
+				if (err != 0)
+					return err;
+			}
+			if (cam->enc_disable) {
+				err = cam->enc_disable(cam);
+				if (err != 0)
+					return err;
+			}
+		}
+
+		/*
+		for (i = 0; i < FRAME_NUM; i++)
+			cam->frame[i].buffer.flags = V4L2_BUF_FLAG_MAPPED;
+
+		cam->enc_counter = 0;
+		INIT_LIST_HEAD(&cam->ready_q);
+		INIT_LIST_HEAD(&cam->working_q);
+		INIT_LIST_HEAD(&cam->done_q);		
+
+		mxc_capture_inputs[cam->current_input].status |= V4L2_IN_ST_NO_POWER;
+		*/
+
+		cam->capture_on = false;
+
+
+		// open stream
+		if (cam->enc_enable) {
+			err = cam->enc_enable(cam);
+			if (err != 0)
+				return err;
+		}
+
+		spin_lock_irqsave(&cam->queue_int_lock, lock_flags);
+		cam->ping_pong_csi = 0;
+		cam->local_buf_num = 0;
+
+		//
+		while(!list_empty(&cam->working_q))
+		{
+			frame = list_entry(cam->working_q.next, struct mxc_v4l_frame, queue);
+			list_del(cam->working_q.next);
+			list_add_tail(&frame->queue, &cam->ready_q);
+			frame->ipu_buf_num = 0;
+		}
+
+		if (cam->enc_update_eba) {
+			frame =
+				list_entry(cam->ready_q.next, struct mxc_v4l_frame, queue);
+			list_del(cam->ready_q.next);
+			list_add_tail(&frame->queue, &cam->working_q);
+			frame->ipu_buf_num = cam->ping_pong_csi;
+			err = cam->enc_update_eba(cam, frame->buffer.m.offset);
+
+			frame =
+				list_entry(cam->ready_q.next, struct mxc_v4l_frame, queue);
+			list_del(cam->ready_q.next);
+			list_add_tail(&frame->queue, &cam->working_q);
+			frame->ipu_buf_num = cam->ping_pong_csi;
+			err |= cam->enc_update_eba(cam, frame->buffer.m.offset);
+			spin_unlock_irqrestore(&cam->queue_int_lock, lock_flags);
+		} else {
+			spin_unlock_irqrestore(&cam->queue_int_lock, lock_flags);
+			return -EINVAL;
+		}
+
+		if (cam->enc_enable_csi) {
+			err = cam->enc_enable_csi(cam);
+			if (err != 0)
+				return err;
+		}
+
+		cam->capture_on = true;
+
 		retval = 1;
 		break;
 	}
