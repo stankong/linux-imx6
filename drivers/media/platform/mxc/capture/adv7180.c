@@ -890,6 +890,52 @@ static int ioctl_g_chip_ident(struct v4l2_int_device *s, int *id)
 }
 
 /*!
+ * ioctl_s_chip_input - V4L2 sensor interface handler for
+ *			VIDIOC_S_CHIP_INPUT ioctl
+ * @s: pointer to standard V4L2 device structure
+ * @id: pointer to int
+ *
+ * Return 0.
+ */ 
+
+static int ioctl_s_chip_input(struct v4l2_int_device *s, int *input)
+{
+	int cur_input;
+
+	cur_input = adv7180_read(ADV7180_INPUT_CTL) & 0xf0;
+	adv7180_write_reg(ADV7180_INPUT_CTL, cur_input | (int)*input);
+
+	// Sequence recommended by Analog Devices - ADV7180 Fast Switching
+	// https://ez.analog.com/docs/DOC-2643
+	adv7180_write_reg(0x14, 0x30);
+	adv7180_write_reg(0x0f, 0x40);
+	adv7180_write_reg(0x01, 0x80);
+	adv7180_write_reg(0x19, 0xb1);
+	adv7180_write_reg(0x2c, 0x12);
+	adv7180_write_reg(0x31, 0x02);
+	adv7180_write_reg(0x37, 0x81);
+	adv7180_write_reg(0x51, 0x89);
+	adv7180_write_reg(0x3a, 0x16);
+	adv7180_write_reg(0x3d, 0xa2);
+	adv7180_write_reg(0x3e, 0x6a);
+	adv7180_write_reg(0x3f, 0xa0);
+	adv7180_write_reg(0x51, 0x9b);
+	adv7180_write_reg(0x0e, 0x85);
+	adv7180_write_reg(0xb6, 0x0c);
+	adv7180_write_reg(0xbe, 0xc0);
+	adv7180_write_reg(0xc0, 0xc0);
+	adv7180_write_reg(0xd1, 0xb9);
+	adv7180_write_reg(0xd6, 0x6d);
+	adv7180_write_reg(0xd9, 0x44);
+	adv7180_write_reg(0x0e, 0x80);
+	adv7180_write_reg(0x55, 0x81);
+	adv7180_write_reg(0x0e, 0x00);
+
+	return 0;
+}
+
+
+/*!
  * ioctl_init - V4L2 sensor interface handler for VIDIOC_INT_INIT
  * @s: pointer to standard V4L2 device structure
  */
@@ -968,6 +1014,8 @@ static struct v4l2_int_ioctl_desc adv7180_ioctl_desc[] = {
 				ioctl_enum_frameintervals},
 	{vidioc_int_g_chip_ident_num,
 				(v4l2_int_ioctl_func *)ioctl_g_chip_ident},
+	{vidioc_int_s_chip_input_num,
+				(v4l2_int_ioctl_func *)ioctl_s_chip_input},
 };
 
 static struct v4l2_int_slave adv7180_slave = {

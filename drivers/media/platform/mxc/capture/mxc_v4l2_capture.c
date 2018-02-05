@@ -2509,6 +2509,14 @@ static long mxc_v4l_do_ioctl(struct file *file,
 		break;
 	}
 
+	case VIDIOC_S_CHIP_INPUT: {
+
+		int *input = arg;
+		vidioc_int_s_chip_input(cam->sensor, input);
+		retval = 1;
+		break;
+	}
+
 	case VIDIOC_TRY_FMT:
 	case VIDIOC_QUERYCTRL:
 	case VIDIOC_G_TUNER:
