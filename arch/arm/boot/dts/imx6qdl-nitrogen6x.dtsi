@@ -44,8 +44,8 @@
 			MX6QDL_PAD_NANDF_CS0__GPIO6_IO11 0x80000000	//U29 LM4871 control
 			MX6QDL_PAD_NANDF_CS1__GPIO6_IO14 0x80000000	//U30 LM4871 control
 			MX6QDL_PAD_GPIO_2__GPIO1_IO02 0x80000000	//buzzer
-		    	MX6QDL_PAD_CSI0_PIXCLK__GPIO5_IO18 0x80000000	//feed_dog pin
-			MX6QDL_PAD_CSI0_DATA_EN__GPIO5_IO20 0x80000000	//enable pin
+		    MX6QDL_PAD_DI0_PIN2__GPIO4_IO18 0x80000000	//feed_dog pin
+			MX6QDL_PAD_DI0_PIN4__GPIO4_IO20 0x80000000	//enable pin
 		>;
 	};
 
@@ -59,9 +59,9 @@
 	pinctrl_i2c3_adv7180_gpios: i2c3-adv7180_gpiosgrp {
 		fsl,pins = <
 			/* No data enable pin, make sure it is not selected */
-			//MX6QDL_PAD_EIM_DA10__GPIO3_IO10		0x0b0b1
-#define GP_ADV7180_PWN		<&gpio5 21 GPIO_ACTIVE_LOW>
-			MX6QDL_PAD_CSI0_VSYNC__GPIO5_IO21 0x80000000
+			// MX6QDL_PAD_EIM_DA10__GPIO3_IO10		0x0b0b1
+#define GP_ADV7180_PWN		<&gpio5 20 GPIO_ACTIVE_LOW>
+			MX6QDL_PAD_CSI0_DATA_EN__GPIO5_IO20 0x80000000
 		>;
 	};
 
@@ -74,10 +74,7 @@
 	};
 
 	pinctrl_i2c3_adv7180_no_cea861: i2c3-adv7180_no_cea861grp {
-		fsl,pins = <
-			MX6QDL_PAD_EIM_DA11__IPU2_CSI1_HSYNC     0xb0b1
-			MX6QDL_PAD_EIM_DA12__IPU2_CSI1_VSYNC     0xb0b1
-		>;
+		
 	};
 
 	
@@ -264,8 +261,8 @@
 
 	watchdog {
 		compatible = "qiyang,qiyang_watchdog";
-		feed-gpios = <&gpio5 18 0>;
-		enable-gpios = <&gpio5 20 0>;
+		feed-gpios = <&gpio4 18 0>;
+		enable-gpios = <&gpio4 20 0>;
 		status = "okay";
 	};
 
