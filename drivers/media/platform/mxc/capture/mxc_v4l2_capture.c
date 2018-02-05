@@ -77,7 +77,7 @@ static int video_nr = -1;
 
 /*! This data is used for the output to the display. */
 #define MXC_V4L2_CAPTURE_NUM_OUTPUTS	6
-#define MXC_V4L2_CAPTURE_NUM_INPUTS	2
+#define MXC_V4L2_CAPTURE_NUM_INPUTS	    4
 static struct v4l2_output mxc_capture_outputs[MXC_V4L2_CAPTURE_NUM_OUTPUTS] = {
 	{
 	 .index = 0,
@@ -142,6 +142,24 @@ static struct v4l2_input mxc_capture_inputs[MXC_V4L2_CAPTURE_NUM_INPUTS] = {
 	{
 	 .index = 1,
 	 .name = "CSI MEM",
+	 .type = V4L2_INPUT_TYPE_CAMERA,
+	 .audioset = 0,
+	 .tuner = 0,
+	 .std = V4L2_STD_UNKNOWN,
+	 .status = V4L2_IN_ST_NO_POWER,
+	 },
+	{
+	 .index = 2,
+	 .name = "CSI VDI IC MEM",
+	 .type = V4L2_INPUT_TYPE_CAMERA,
+	 .audioset = 0,
+	 .tuner = 0,
+	 .std = V4L2_STD_UNKNOWN,
+	 .status = 0,
+	 },
+	{
+	 .index = 3,
+	 .name = "CSI VDI MEM",
 	 .type = V4L2_INPUT_TYPE_CAMERA,
 	 .audioset = 0,
 	 .tuner = 0,
@@ -351,7 +369,8 @@ static int mxc_v4l2_prepare_bufs(cam_data *cam, struct v4l2_buffer *buf)
 	pr_debug("%s\n", __func__);
 
 	if (buf->index < 0 || buf->index >= FRAME_NUM || buf->length <
-			PAGE_ALIGN(cam->v2f.fmt.pix.sizeimage)) {
+		//	PAGE_ALIGN(cam->v2f.fmt.pix.sizeimage)) {
+			cam->v2f.fmt.pix.sizeimage) {
 		pr_err("ERROR: v4l2 capture: mxc_v4l2_prepare_bufs buffers "
 			"not allocated,index=%d, length=%d\n", buf->index,
 			buf->length);
@@ -831,8 +850,11 @@ static int mxc_v4l2_s_fmt(cam_data *cam, struct v4l2_format *f)
 		 * Force the capture window resolution to be crop bounds
 		 * for CSI MEM input mode.
 		 */
-		if (strcmp(mxc_capture_inputs[cam->current_input].name,
-			   "CSI MEM") == 0) {
+		// if (strcmp(mxc_capture_inputs[cam->current_input].name,
+		// 	   "CSI MEM") == 0) {
+		if ((strcmp(mxc_capture_inputs[cam->current_input].name,
+			   "CSI MEM") == 0) || (strcmp(mxc_capture_inputs[cam->current_input].name,
+			   "CSI VDI MEM") == 0)) {
 			f->fmt.pix.width = cam->crop_current.width;
 			f->fmt.pix.height = cam->crop_current.height;
 		}
@@ -1695,6 +1717,14 @@ int mxc_cam_select_input(cam_data *cam, int index)
 #if defined(CONFIG_MXC_IPU_PRP_ENC) || defined(CONFIG_MXC_IPU_PRP_ENC_MODULE)
 		retval = prp_enc_select(cam);
 #endif
+	} else if (strcmp(mxc_capture_inputs[cam->current_input].name,"CSI VDI MEM") == 0) {
+#if defined(CONFIG_MXC_IPU_VDI_ENC) || defined(CONFIG_MXC_IPU_VDI_ENC_MODULE)
+		retval = vdi_enc_select(cam);
+#endif
+	} else if (strcmp(mxc_capture_inputs[cam->current_input].name,"CSI VDI IC MEM") == 0) {
+#if defined(CONFIG_MXC_IPU_VDI_PRP_ENC) || defined(CONFIG_MXC_IPU_VDI_PRP_ENC_MODULE)
+		retval = vdi_prp_enc_select(cam);
+#endif
 	}
 	if (retval) {
 		pr_err("%s:error(%d) setting input %d\n", __func__, retval, index);
@@ -1873,6 +1903,16 @@ static int mxc_v4l_close(struct file *file)
 #if defined(CONFIG_MXC_IPU_PRP_ENC) || defined(CONFIG_MXC_IPU_PRP_ENC_MODULE)
 			err |= prp_enc_deselect(cam);
 #endif
+		} else if (strcmp(mxc_capture_inputs[cam->current_input].name,
+				  "CSI VDI MEM") == 0) {
+#if defined(CONFIG_MXC_IPU_VDI_ENC) || defined(CONFIG_MXC_IPU_VDI_ENC_MODULE)
+			err |= vdi_enc_deselect(cam);
+#endif
+		} else if (strcmp(mxc_capture_inputs[cam->current_input].name,
+				  "CSI VDI IC MEM") == 0) {
+#if defined(CONFIG_MXC_IPU_VDI_PRP_ENC) || defined(CONFIG_MXC_IPU_VDI_PRP_ENC_MODULE)
+			err |= vdi_prp_enc_deselect(cam);
+#endif
 		}
 
 		mxc_free_frame_buf(cam);
@@ -1898,8 +1938,11 @@ static int mxc_v4l_close(struct file *file)
 }
 
 #if defined(CONFIG_MXC_IPU_PRP_ENC) || defined(CONFIG_MXC_IPU_CSI_ENC) || \
+	defined(CONFIG_MXC_IPU_VDI_PRP_ENC) || defined(CONFIG_MXC_IPU_VDI_ENC) || \
     defined(CONFIG_MXC_IPU_PRP_ENC_MODULE) || \
-    defined(CONFIG_MXC_IPU_CSI_ENC_MODULE)
+    defined(CONFIG_MXC_IPU_CSI_ENC_MODULE) || \
+    defined(CONFIG_MXC_IPU_VDI_PRP_ENC_MODULE) || \
+    defined(CONFIG_MXC_IPU_VDI_ENC_MODULE)
 /*
  * V4L interface - read function
  *
