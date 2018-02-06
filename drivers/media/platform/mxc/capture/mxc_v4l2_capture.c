@@ -1717,11 +1717,11 @@ int mxc_cam_select_input(cam_data *cam, int index)
 #if defined(CONFIG_MXC_IPU_PRP_ENC) || defined(CONFIG_MXC_IPU_PRP_ENC_MODULE)
 		retval = prp_enc_select(cam);
 #endif
-	} else if (strcmp(mxc_capture_inputs[cam->current_input].name,"CSI VDI MEM") == 0) {
+	} else if (strcmp(mxc_capture_inputs[index].name,"CSI VDI MEM") == 0) {
 #if defined(CONFIG_MXC_IPU_VDI_ENC) || defined(CONFIG_MXC_IPU_VDI_ENC_MODULE)
 		retval = vdi_enc_select(cam);
 #endif
-	} else if (strcmp(mxc_capture_inputs[cam->current_input].name,"CSI VDI IC MEM") == 0) {
+	} else if (strcmp(mxc_capture_inputs[index].name,"CSI VDI IC MEM") == 0) {
 #if defined(CONFIG_MXC_IPU_VDI_PRP_ENC) || defined(CONFIG_MXC_IPU_VDI_PRP_ENC_MODULE)
 		retval = vdi_prp_enc_select(cam);
 #endif
@@ -2029,6 +2029,99 @@ exit0:
 	return cam->v2f.fmt.pix.sizeimage - err;
 }
 #endif
+
+static int mxc_v4l2_reset(cam_data *cam)
+{
+	struct mxc_v4l_frame *frame;
+	unsigned long lock_flags;
+	int err = 0;
+
+	pr_debug("%s\n", __func__);
+	
+	//close stream
+	/* For both CSI--MEM and CSI--IC--MEM
+	* 1. wait for idmac eof
+	* 2. disable csi first
+	* 3. disable idmac
+	* 4. disable smfc (CSI--MEM channel)
+	*/
+	if (mxc_capture_inputs[cam->current_input].name != NULL) {
+		if (cam->enc_disable_csi) {
+			err = cam->enc_disable_csi(cam);
+			if (err != 0)
+				return err;
+		}
+		if (cam->enc_disable) {
+			err = cam->enc_disable(cam);
+			if (err != 0)
+				return err;
+		}
+	}
+
+	//clear counter
+	cam->enc_counter = 0;
+
+	// open stream
+	if (cam->enc_enable) {
+		err = cam->enc_enable(cam);
+		if (err != 0)
+			return err;
+	}
+
+	//reset buffer
+	spin_lock_irqsave(&cam->queue_int_lock, lock_flags);
+	cam->ping_pong_csi = 0;
+	cam->local_buf_num = 0;
+
+	//mv working frame to ready
+	while(!list_empty(&cam->working_q))
+	{
+		frame = list_entry(cam->working_q.next, struct mxc_v4l_frame, queue);
+		list_del(cam->working_q.next);
+		list_add_tail(&frame->queue, &cam->ready_q);
+		frame->ipu_buf_num = 0;
+		frame->buffer.flags = V4L2_BUF_FLAG_MAPPED | V4L2_BUF_FLAG_QUEUED;
+	}
+
+	//mv done frame to ready
+	while(!list_empty(&cam->done_q))
+	{
+		frame = list_entry(cam->done_q.next, struct mxc_v4l_frame, queue);
+		list_del(cam->done_q.next);
+		list_add_tail(&frame->queue, &cam->ready_q);
+		frame->ipu_buf_num = 0;
+		frame->buffer.flags = V4L2_BUF_FLAG_MAPPED | V4L2_BUF_FLAG_QUEUED;
+	}
+
+	//reupdate buffer to enc
+	if (cam->enc_update_eba) {
+		frame =
+			list_entry(cam->ready_q.next, struct mxc_v4l_frame, queue);
+		list_del(cam->ready_q.next);
+		list_add_tail(&frame->queue, &cam->working_q);
+		frame->ipu_buf_num = cam->ping_pong_csi;
+		err = cam->enc_update_eba(cam, frame->buffer.m.offset);
+
+		frame =
+			list_entry(cam->ready_q.next, struct mxc_v4l_frame, queue);
+		list_del(cam->ready_q.next);
+		list_add_tail(&frame->queue, &cam->working_q);
+		frame->ipu_buf_num = cam->ping_pong_csi;
+		err |= cam->enc_update_eba(cam, frame->buffer.m.offset);
+		spin_unlock_irqrestore(&cam->queue_int_lock, lock_flags);
+	} else {
+		spin_unlock_irqrestore(&cam->queue_int_lock, lock_flags);
+		return -EINVAL;
+	}
+
+	if (cam->enc_enable_csi) {
+		err = cam->enc_enable_csi(cam);
+		if (err != 0)
+			return err;
+	}
+
+	return err;
+}
 
 /*!
  * V4L interface - ioctl function
@@ -2553,98 +2646,11 @@ static long mxc_v4l_do_ioctl(struct file *file,
 	}
 
 	case VIDIOC_S_CHIP_INPUT: {
-
 		int *input = arg;
-		struct mxc_v4l_frame *frame;
-		unsigned long lock_flags;
-		int err = 0;
-
-		vidioc_int_s_chip_input(cam->sensor, input);
-
-		//close stream
-		/* For both CSI--MEM and CSI--IC--MEM
-		* 1. wait for idmac eof
-		* 2. disable csi first
-		* 3. disable idmac
-		* 4. disable smfc (CSI--MEM channel)
-		*/
-		if (mxc_capture_inputs[cam->current_input].name != NULL) {
-			if (cam->enc_disable_csi) {
-				err = cam->enc_disable_csi(cam);
-				if (err != 0)
-					return err;
-			}
-			if (cam->enc_disable) {
-				err = cam->enc_disable(cam);
-				if (err != 0)
-					return err;
-			}
-		}
-
-		/*
-		for (i = 0; i < FRAME_NUM; i++)
-			cam->frame[i].buffer.flags = V4L2_BUF_FLAG_MAPPED;
-
-		cam->enc_counter = 0;
-		INIT_LIST_HEAD(&cam->ready_q);
-		INIT_LIST_HEAD(&cam->working_q);
-		INIT_LIST_HEAD(&cam->done_q);		
-
-		mxc_capture_inputs[cam->current_input].status |= V4L2_IN_ST_NO_POWER;
-		*/
-
-		cam->capture_on = false;
-
-
-		// open stream
-		if (cam->enc_enable) {
-			err = cam->enc_enable(cam);
-			if (err != 0)
-				return err;
-		}
-
-		spin_lock_irqsave(&cam->queue_int_lock, lock_flags);
-		cam->ping_pong_csi = 0;
-		cam->local_buf_num = 0;
-
-		//
-		while(!list_empty(&cam->working_q))
-		{
-			frame = list_entry(cam->working_q.next, struct mxc_v4l_frame, queue);
-			list_del(cam->working_q.next);
-			list_add_tail(&frame->queue, &cam->ready_q);
-			frame->ipu_buf_num = 0;
-		}
-
-		if (cam->enc_update_eba) {
-			frame =
-				list_entry(cam->ready_q.next, struct mxc_v4l_frame, queue);
-			list_del(cam->ready_q.next);
-			list_add_tail(&frame->queue, &cam->working_q);
-			frame->ipu_buf_num = cam->ping_pong_csi;
-			err = cam->enc_update_eba(cam, frame->buffer.m.offset);
-
-			frame =
-				list_entry(cam->ready_q.next, struct mxc_v4l_frame, queue);
-			list_del(cam->ready_q.next);
-			list_add_tail(&frame->queue, &cam->working_q);
-			frame->ipu_buf_num = cam->ping_pong_csi;
-			err |= cam->enc_update_eba(cam, frame->buffer.m.offset);
-			spin_unlock_irqrestore(&cam->queue_int_lock, lock_flags);
-		} else {
-			spin_unlock_irqrestore(&cam->queue_int_lock, lock_flags);
-			return -EINVAL;
-		}
-
-		if (cam->enc_enable_csi) {
-			err = cam->enc_enable_csi(cam);
-			if (err != 0)
-				return err;
-		}
-
-		cam->capture_on = true;
-
-		retval = 1;
+		if(vidioc_int_s_chip_input(cam->sensor, input)==0)
+			retval = mxc_v4l2_reset(cam);		
+		else
+			retval = 0;				
 		break;
 	}
 
@@ -2816,9 +2822,10 @@ static void camera_callback(u32 mask, void *dev)
 		if (done_frame->buffer.flags & V4L2_BUF_FLAG_QUEUED) {
 			done_frame->buffer.flags |= V4L2_BUF_FLAG_DONE;
 			done_frame->buffer.flags &= ~V4L2_BUF_FLAG_QUEUED;
-
+			
 			/* Added to the done queue */
 			list_del(cam->working_q.next);
+			
 			list_add_tail(&done_frame->queue, &cam->done_q);
 
 			/* Wake up the queue */

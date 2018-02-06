@@ -895,21 +895,31 @@ static int ioctl_g_chip_ident(struct v4l2_int_device *s, int *id)
  * @s: pointer to standard V4L2 device structure
  * @id: pointer to int
  *
- * Return 0.
+ * Return 0:Change Input OK
+ * Return 1:No Need Change Input
  */ 
 
 static int ioctl_s_chip_input(struct v4l2_int_device *s, int *input)
 {
-	int cur_input;
+	int cur_input_other,cur_input;
 
 	struct adv7180_priv *adv = s->priv;
 
-	cur_input = adv7180_read(adv, ADV7180_INPUT_CTL) & 0xf0;
+	cur_input_other = adv7180_read(adv, ADV7180_INPUT_CTL);
+
+	cur_input = cur_input_other & 0x0f;
+	if(cur_input == (int)*input)
+	{
+		return 1;
+	}
+
+	cur_input = cur_input_other & 0xf0;
+
 	adv7180_write_reg(adv, ADV7180_INPUT_CTL, cur_input | (int)*input);
 
 	// Sequence recommended by Analog Devices - ADV7180 Fast Switching
 	// https://ez.analog.com/docs/DOC-2643
-	/* err,status1 = 0x42
+	// err,status1 = 0x42
 	adv7180_write_reg(adv, 0x14, 0x30);
 	adv7180_write_reg(adv, 0x0f, 0x40);
 	adv7180_write_reg(adv, 0x01, 0x80);
@@ -933,8 +943,7 @@ static int ioctl_s_chip_input(struct v4l2_int_device *s, int *input)
 	adv7180_write_reg(adv, 0x0e, 0x80);
 	adv7180_write_reg(adv, 0x55, 0x81);
 	adv7180_write_reg(adv, 0x0e, 0x00);
-	*/
-
+	
 	return 0;
 }
 

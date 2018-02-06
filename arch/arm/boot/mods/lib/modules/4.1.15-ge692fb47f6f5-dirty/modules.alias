@@ -1,0 +1,13 @@
+# Aliases extracted from modules themselves.
+alias fs-configfs configfs
+alias platform:mxc_dcic mxc_dcic
+alias of:N*T*Cfsl,imx6sx-dcic* mxc_dcic
+alias of:N*T*Cfsl,imx6q-dcic* mxc_dcic
+alias tty-ldisc-2 serport
+alias serio:ty05pr*id*ex* psmouse
+alias serio:ty01pr*id*ex* psmouse
+alias of:N*T*Cfsl,imx6q-v4l2-capture* mxc_v4l2_capture
+alias platform:v4l2-capture-imx6 mxc_v4l2_capture
+alias platform:v4l2-capture-imx5 mxc_v4l2_capture
+alias i2c:adv7180 adv7180_tvin
+alias of:N*T*Cfsl,imx6s-csi* mx6s_capture

@@ -909,11 +909,11 @@ int32_t ipu_init_channel(struct ipu_soc *ipu, ipu_channel_t channel, ipu_channel
 		ipu->vdi_use_count++;
 		ipu->csi_channel[params->csi_vdi_mem.csi] = channel;
 
-		if (params->csi_vdi_mem.mipi_en) {
+		if (params->csi_vdi_mem.mipi.en) {
 			ipu_conf |= (1 << (IPU_CONF_CSI0_DATA_SOURCE_OFFSET +
 				params->csi_vdi_mem.csi));
 			_ipu_csi_set_mipi_di(ipu, 0,
-				params->csi_vdi_mem.mipi_id,
+				params->csi_vdi_mem.mipi.id,
 				params->csi_vdi_mem.csi);
 		} else
 			ipu_conf &= ~(1 << (IPU_CONF_CSI0_DATA_SOURCE_OFFSET +
@@ -958,11 +958,11 @@ int32_t ipu_init_channel(struct ipu_soc *ipu, ipu_channel_t channel, ipu_channel
 		ipu->vdi_use_count++;
 		ipu->csi_channel[params->csi_vdi_prp_mem.csi] = channel;
 
-		if (params->csi_vdi_prp_mem.mipi_en) {
+		if (params->csi_vdi_prp_mem.mipi.en) {
 			ipu_conf |= (1 << (IPU_CONF_CSI0_DATA_SOURCE_OFFSET +
 				params->csi_vdi_prp_mem.csi));
 			_ipu_csi_set_mipi_di(ipu, 0,
-				params->csi_vdi_prp_mem.mipi_id,
+				params->csi_vdi_prp_mem.mipi.id,
 				params->csi_vdi_prp_mem.csi);
 		} else
 			ipu_conf &= ~(1 << (IPU_CONF_CSI0_DATA_SOURCE_OFFSET +

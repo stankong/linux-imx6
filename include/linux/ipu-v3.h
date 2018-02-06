@@ -170,9 +170,7 @@ typedef union {
 		enum v4l2_field field_fmt;
 		ipu_motion_sel motion_sel;
 		uint32_t csi;
-		uint32_t mipi_id;
-		uint32_t mipi_vc;
-		bool mipi_en;
+		struct mipi_fields mipi;
 	} csi_vdi_mem;
 	struct {
 		uint32_t in_width;
@@ -187,9 +185,7 @@ typedef union {
 		enum v4l2_field field_fmt;
 		ipu_motion_sel motion_sel;
 		uint32_t csi;
-		uint32_t mipi_id;
-		uint32_t mipi_vc;
-		bool mipi_en;
+		struct mipi_fields mipi;
 	} csi_vdi_prp_mem;
 	struct {
 		uint32_t in_width;

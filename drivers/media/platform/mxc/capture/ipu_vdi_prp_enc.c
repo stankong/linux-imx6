@@ -71,11 +71,7 @@ static int vdi_prp_enc_setup(cam_data *cam)
 	ipu_channel_params_t enc;
 	int err = 0;
 	dma_addr_t dummy = cam->dummy_frame.buffer.m.offset;
-#ifdef CONFIG_MXC_MIPI_CSI2
-	void *mipi_csi2_info;
-	int ipu_id;
-	int csi_id;
-#endif
+
 
 	CAMERA_TRACE("In vdi_prp_enc_setup\n");
 	if (!cam) {
@@ -148,33 +144,9 @@ static int vdi_prp_enc_setup(cam_data *cam)
 	}
 
 #ifdef CONFIG_MXC_MIPI_CSI2
-	mipi_csi2_info = mipi_csi2_get_info();
-
-	if (mipi_csi2_info) {
-		if (mipi_csi2_get_status(mipi_csi2_info)) {
-			ipu_id = mipi_csi2_get_bind_ipu(mipi_csi2_info);
-			csi_id = mipi_csi2_get_bind_csi(mipi_csi2_info);
-
-			if (cam->ipu == ipu_get_soc(ipu_id)
-				&& cam->csi == csi_id) {
-				enc.csi_vdi_prp_mem.mipi_en = true;
-				enc.csi_vdi_prp_mem.mipi_vc =
-				mipi_csi2_get_virtual_channel(mipi_csi2_info);
-				enc.csi_vdi_prp_mem.mipi_id =
-				mipi_csi2_get_datatype(mipi_csi2_info);
-
-				mipi_csi2_pixelclk_enable(mipi_csi2_info);
-			} else {
-				enc.csi_vdi_prp_mem.mipi_en = false;
-				enc.csi_vdi_prp_mem.mipi_vc = 0;
-				enc.csi_vdi_prp_mem.mipi_id = 0;
-			}
-		} else {
-			enc.csi_vdi_prp_mem.mipi_en = false;
-			enc.csi_vdi_prp_mem.mipi_vc = 0;
-			enc.csi_vdi_prp_mem.mipi_id = 0;
-		}
-	}
+    err = cam_mipi_csi2_enable(cam, &enc.csi_vdi_prp_mem.mipi);
+	if (err)
+		return err;
 #endif
 
 	err = ipu_init_channel(cam->ipu, CSI_VDI_PRP_VF_MEM, &enc);
@@ -444,11 +416,7 @@ static int vdi_prp_enc_disabling_tasks(void *private)
 {
 	cam_data *cam = (cam_data *) private;
 	int err = 0;
-#ifdef CONFIG_MXC_MIPI_CSI2
-	void *mipi_csi2_info;
-	int ipu_id;
-	int csi_id;
-#endif
+	int err2 = 0;
 
 	if (cam->rotation >= IPU_ROTATE_90_RIGHT) {
 		ipu_free_irq(cam->ipu, IPU_IRQ_PRP_ENC_ROT_OUT_EOF, cam);
@@ -459,9 +427,9 @@ static int vdi_prp_enc_disabling_tasks(void *private)
 	if (cam->rotation >= IPU_ROTATE_90_RIGHT)
 		err |= ipu_disable_channel(cam->ipu, MEM_ROT_ENC_MEM, true);
 
-	ipu_uninit_channel(cam->ipu, CSI_VDI_PRP_VF_MEM);
+	ipu_uninit_channel(cam->ipu, CSI_VDI_PRP_VF_MEM, NULL);
 	if (cam->rotation >= IPU_ROTATE_90_RIGHT)
-		ipu_uninit_channel(cam->ipu, MEM_ROT_ENC_MEM);
+		ipu_uninit_channel(cam->ipu, MEM_ROT_ENC_MEM, NULL);
 
 	if (cam->dummy_frame.vaddress != 0) {
 		dma_free_coherent(0, cam->dummy_frame.buffer.length,
@@ -471,18 +439,8 @@ static int vdi_prp_enc_disabling_tasks(void *private)
 	}
 
 #ifdef CONFIG_MXC_MIPI_CSI2
-	mipi_csi2_info = mipi_csi2_get_info();
-
-	if (mipi_csi2_info) {
-		if (mipi_csi2_get_status(mipi_csi2_info)) {
-			ipu_id = mipi_csi2_get_bind_ipu(mipi_csi2_info);
-			csi_id = mipi_csi2_get_bind_csi(mipi_csi2_info);
-
-			if (cam->ipu == ipu_get_soc(ipu_id)
-				&& cam->csi == csi_id)
-				mipi_csi2_pixelclk_disable(mipi_csi2_info);
-		}
-	}
+	err2 = cam_mipi_csi2_disable(cam);
+	err = err ? err : err2;
 #endif
 
 	return err;
@@ -496,9 +454,7 @@ static int vdi_prp_enc_disabling_tasks(void *private)
  */
 static int vdi_prp_enc_enable_csi(void *private)
 {
-	cam_data *cam = (cam_data *) private;
-
-	return ipu_enable_csi(cam->ipu, cam->csi);
+	return cam_ipu_enable_csi((cam_data *)private);
 }
 
 /*!
@@ -517,7 +473,7 @@ static int vdi_prp_enc_disable_csi(void *private)
 	if (cam->rotation < IPU_ROTATE_90_RIGHT)
 		ipu_free_irq(cam->ipu, IPU_IRQ_PRP_VF_OUT_EOF, cam);
 
-	return ipu_disable_csi(cam->ipu, cam->csi);
+	return cam_ipu_disable_csi(cam);
 }
 
 /*!
