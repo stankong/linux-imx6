@@ -912,7 +912,8 @@ int32_t ipu_init_channel(struct ipu_soc *ipu, ipu_channel_t channel, ipu_channel
 		if (params->csi_vdi_mem.mipi.en) {
 			ipu_conf |= (1 << (IPU_CONF_CSI0_DATA_SOURCE_OFFSET +
 				params->csi_vdi_mem.csi));
-			_ipu_csi_set_mipi_di(ipu, 0,
+			_ipu_csi_set_mipi_di(ipu, 
+				params->csi_vdi_mem.mipi.vc,
 				params->csi_vdi_mem.mipi.id,
 				params->csi_vdi_mem.csi);
 		} else
@@ -961,7 +962,8 @@ int32_t ipu_init_channel(struct ipu_soc *ipu, ipu_channel_t channel, ipu_channel
 		if (params->csi_vdi_prp_mem.mipi.en) {
 			ipu_conf |= (1 << (IPU_CONF_CSI0_DATA_SOURCE_OFFSET +
 				params->csi_vdi_prp_mem.csi));
-			_ipu_csi_set_mipi_di(ipu, 0,
+			_ipu_csi_set_mipi_di(ipu, 
+				params->csi_vdi_prp_mem.mipi.vc,
 				params->csi_vdi_prp_mem.mipi.id,
 				params->csi_vdi_prp_mem.csi);
 		} else
@@ -987,6 +989,7 @@ int32_t ipu_init_channel(struct ipu_soc *ipu, ipu_channel_t channel, ipu_channel
 		_ipu_csi_init(ipu, channel, params->csi_vdi_prp_mem.csi);
 		_ipu_ic_init_prpvf(ipu, channel, params, true);
 		_ipu_vdi_init(ipu, channel, params);
+		break;
 	case MEM_PRP_VF_MEM:
 		if (params->mem_prp_vf_mem.graphics_combine_en) {
 			sec_dma = channel_2_dma(channel, IPU_GRAPH_IN_BUFFER);
@@ -2562,6 +2565,16 @@ int32_t ipu_enable_channel(struct ipu_soc *ipu, ipu_channel_t channel)
 		if (ipu->ic_use_count > 0)
 			ipu_conf |= IPU_CONF_IC_EN;
 		break;
+	case CSI_VDI_MEM:
+	case CSI_VDI_PRP_VF_MEM:
+		if (ipu->vdi_use_count > 0) {
+			ipu_conf |= IPU_CONF_ISP_EN;
+			ipu_conf |= IPU_CONF_VDI_EN;
+			ipu_conf |= IPU_CONF_IC_INPUT;
+		}
+		if (ipu->ic_use_count > 0)
+			ipu_conf |= IPU_CONF_IC_EN;
+		break;
 	default:
 		break;
 	}
@@ -3028,6 +3041,13 @@ static irqreturn_t ipu_sync_irq_handler(int irq, void *desc)
 		int_stat &= int_ctrl;
 		ipu_cm_write(ipu, int_stat,
 				IPU_INT_STAT(ipu->devtype, int_reg[i]));
+		//debug by stan
+		if(int_stat)
+		{
+			dev_warn(ipu->dev,
+					"IPU Warning - IPU_INT_STAT_%d = 0x%08X\n",
+					int_reg[i], int_stat);
+		}
 		while ((line = ffs(int_stat)) != 0) {
 			bit = --line;
 			int_stat &= ~(1UL << line);
