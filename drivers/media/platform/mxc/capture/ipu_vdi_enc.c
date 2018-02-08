@@ -127,19 +127,25 @@ static int vdi_enc_setup(cam_data *cam)
 		return -EINVAL;
 	}
 
-#ifdef CONFIG_MXC_MIPI_CSI2
     err = cam_mipi_csi2_enable(cam, &params.csi_vdi_mem.mipi);
 	if (err)
 		return err;
-#endif
 
-	err = ipu_init_channel(cam->ipu, CSI_VDI_MEM, &params);
-	if (err != 0) {
-		printk(KERN_ERR "ipu_init_channel %d\n", err);
+	// err = ipu_init_channel(cam->ipu, CSI_VDI_MEM, &params);
+	// if (err != 0) {
+	// 	printk(KERN_ERR "ipu_init_channel %d\n", err);
+	// 	return err;
+	// }
+
+	err = ipu_channel_request(cam->ipu, CSI_VDI_MEM, &params, &cam->ipu_chan);
+	if (err) {
+		pr_err("%s: ipu_channel_request %d\n", __func__, err);
 		return err;
 	}
 
-	err = ipu_init_channel_buffer(cam->ipu, CSI_VDI_MEM, IPU_OUTPUT_BUFFER,
+	err = ipu_init_channel_buffer(cam->ipu, 
+					  CSI_VDI_MEM, 
+					  IPU_OUTPUT_BUFFER,
 				      pixel_fmt, cam->v2f.fmt.pix.width,
 				      cam->v2f.fmt.pix.height,
 				      cam->v2f.fmt.pix.bytesperline,
@@ -253,9 +259,13 @@ static int vdi_enc_disabling_tasks(void *private)
 	int err = 0;
 	int err2 = 0;
 
-	err = ipu_disable_channel(cam->ipu, CSI_VDI_MEM, true);
+	// err = ipu_disable_channel(cam->ipu, CSI_VDI_MEM, true);
 
-	ipu_uninit_channel(cam->ipu, CSI_VDI_MEM, NULL);
+	// ipu_uninit_channel(cam->ipu, CSI_VDI_MEM, NULL);
+
+	err = ipu_channel_disable(cam->ipu_chan, true);
+
+	ipu_channel_free(&cam->ipu_chan);
 
 	if (cam->dummy_frame.vaddress != 0) {
 		dma_free_coherent(0, cam->dummy_frame.buffer.length,
@@ -264,10 +274,9 @@ static int vdi_enc_disabling_tasks(void *private)
 		cam->dummy_frame.vaddress = 0;
 	}
 
-#ifdef CONFIG_MXC_MIPI_CSI2
 	err2 = cam_mipi_csi2_disable(cam);
 	err = err ? err : err2;
-#endif
+
 	return err;
 }
 
