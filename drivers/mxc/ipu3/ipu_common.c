@@ -2565,6 +2565,16 @@ int32_t ipu_enable_channel(struct ipu_soc *ipu, ipu_channel_t channel)
 		if (ipu->ic_use_count > 0)
 			ipu_conf |= IPU_CONF_IC_EN;
 		break;
+	case CSI_VDI_MEM:
+	case CSI_VDI_PRP_VF_MEM:
+		if (ipu->vdi_use_count > 0) {
+			ipu_conf |= IPU_CONF_ISP_EN;
+			ipu_conf |= IPU_CONF_VDI_EN;
+			ipu_conf |= IPU_CONF_IC_INPUT;
+		}
+		if (ipu->ic_use_count > 0)
+			ipu_conf |= IPU_CONF_IC_EN;
+		break;
 	default:
 		break;
 	}
