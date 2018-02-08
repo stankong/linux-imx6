@@ -2808,7 +2808,7 @@ int32_t ipu_disable_channel(struct ipu_soc *ipu, ipu_channel_t channel, bool wai
 				( !_ipu_is_smfc_chan(out_dma)) &&
 				( channel != CSI_VDI_PRP_VF_MEM ) &&
 				( channel != CSI_PRP_VF_MEM ) && 
-				( channel != CSI_PRP_ENC_MEM ) 
+				( channel != CSI_PRP_ENC_MEM ))
 	{
 		while (idma_is_set(ipu, IDMAC_CHA_BUSY(ipu->devtype, in_dma),
 					in_dma) ||
