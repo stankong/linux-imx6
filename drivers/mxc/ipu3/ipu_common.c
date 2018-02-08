@@ -2804,8 +2804,12 @@ int32_t ipu_disable_channel(struct ipu_soc *ipu, ipu_channel_t channel, bool wai
 				}
 			}
 		}
-	} else if (wait_for_stop && !_ipu_is_smfc_chan(out_dma) &&
-		   channel != CSI_PRP_VF_MEM && channel != CSI_PRP_ENC_MEM) {
+	} else if   ( wait_for_stop && 
+				( !_ipu_is_smfc_chan(out_dma)) &&
+				( channel != CSI_VDI_PRP_VF_MEM ) &&
+				( channel != CSI_PRP_VF_MEM ) && 
+				( channel != CSI_PRP_ENC_MEM ) 
+	{
 		while (idma_is_set(ipu, IDMAC_CHA_BUSY(ipu->devtype, in_dma),
 					in_dma) ||
 		       idma_is_set(ipu, IDMAC_CHA_BUSY(ipu->devtype, out_dma),
@@ -3042,12 +3046,12 @@ static irqreturn_t ipu_sync_irq_handler(int irq, void *desc)
 		ipu_cm_write(ipu, int_stat,
 				IPU_INT_STAT(ipu->devtype, int_reg[i]));
 		//debug by stan
-		if(int_stat)
-		{
-			dev_warn(ipu->dev,
-					"IPU Warning - IPU_INT_STAT_%d = 0x%08X\n",
-					int_reg[i], int_stat);
-		}
+		// if(int_stat)
+		// {
+		// 	dev_warn(ipu->dev,
+		// 			"IPU Warning - IPU_INT_STAT_%d = 0x%08X\n",
+		// 			int_reg[i], int_stat);
+		// }
 		while ((line = ffs(int_stat)) != 0) {
 			bit = --line;
 			int_stat &= ~(1UL << line);
