@@ -443,10 +443,6 @@ static int mxc_v4l2_reset(cam_data *cam)
 		}
 	}
 
-
-	//clear counter
-	cam->enc_counter = 0;
-
 	// open stream
 	if (cam->enc_enable) {
 		err = cam->enc_enable(cam);
@@ -458,6 +454,9 @@ static int mxc_v4l2_reset(cam_data *cam)
 	spin_lock_irqsave(&cam->queue_int_lock, lock_flags);
 	spin_lock(&cam->dqueue_int_lock);
 
+
+	//clear counter
+	cam->enc_counter = 0;
 
 	cam->ping_pong_csi = 0;
 	cam->local_buf_num = 0;
