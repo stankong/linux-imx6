@@ -132,16 +132,16 @@ static struct v4l2_output mxc_capture_outputs[MXC_V4L2_CAPTURE_NUM_OUTPUTS] = {
 static struct v4l2_input mxc_capture_inputs[MXC_V4L2_CAPTURE_NUM_INPUTS] = {
 	{
 	 .index = 0,
-	 .name = "CSI IC MEM",
+	 .name = "CSI MEM",
 	 .type = V4L2_INPUT_TYPE_CAMERA,
 	 .audioset = 0,
 	 .tuner = 0,
 	 .std = V4L2_STD_UNKNOWN,
-	 .status = 0,
+	 .status = V4L2_IN_ST_NO_POWER,
 	 },
-	{
+	 {
 	 .index = 1,
-	 .name = "CSI MEM",
+	 .name = "CSI VDI MEM",
 	 .type = V4L2_INPUT_TYPE_CAMERA,
 	 .audioset = 0,
 	 .tuner = 0,
@@ -159,12 +159,12 @@ static struct v4l2_input mxc_capture_inputs[MXC_V4L2_CAPTURE_NUM_INPUTS] = {
 	 },
 	{
 	 .index = 3,
-	 .name = "CSI VDI MEM",
+	 .name = "CSI IC MEM",
 	 .type = V4L2_INPUT_TYPE_CAMERA,
 	 .audioset = 0,
 	 .tuner = 0,
 	 .std = V4L2_STD_UNKNOWN,
-	 .status = V4L2_IN_ST_NO_POWER,
+	 .status = 0,
 	 },
 };
 
@@ -413,6 +413,105 @@ static inline int valid_mode(u32 palette)
 		(palette == V4L2_PIX_FMT_YUV420) ||
 		(palette == V4L2_PIX_FMT_YVU420) ||
 		(palette == V4L2_PIX_FMT_NV12));
+}
+
+static int mxc_v4l2_reset(cam_data *cam)
+{
+	struct mxc_v4l_frame *frame;
+	unsigned long lock_flags;
+	int err = 0;
+
+	pr_debug("%s\n", __func__);
+	
+	//close stream
+	/* For both CSI--MEM and CSI--IC--MEM
+	* 1. wait for idmac eof
+	* 2. disable csi first
+	* 3. disable idmac
+	* 4. disable smfc (CSI--MEM channel)
+	*/
+	if (mxc_capture_inputs[cam->current_input].name != NULL) {
+		if (cam->enc_disable_csi) {
+			err = cam->enc_disable_csi(cam);
+			if (err != 0)
+				return err;
+		}
+		if (cam->enc_disable) {
+			err = cam->enc_disable(cam);
+			if (err != 0)
+				return err;
+		}
+	}
+
+
+	//clear counter
+	cam->enc_counter = 0;
+
+	// open stream
+	if (cam->enc_enable) {
+		err = cam->enc_enable(cam);
+		if (err != 0)
+			return err;
+	}
+
+	//reset buffer
+	spin_lock_irqsave(&cam->queue_int_lock, lock_flags);
+	spin_lock(&cam->dqueue_int_lock);
+
+
+	cam->ping_pong_csi = 0;
+	cam->local_buf_num = 0;
+
+	//mv working frame to ready
+	while(!list_empty(&cam->working_q))
+	{
+		frame = list_entry(cam->working_q.next, struct mxc_v4l_frame, queue);
+		list_del(cam->working_q.next);
+		list_add_tail(&frame->queue, &cam->ready_q);
+		frame->ipu_buf_num = 0;
+		frame->buffer.flags = V4L2_BUF_FLAG_MAPPED | V4L2_BUF_FLAG_QUEUED;
+	}
+
+	//mv done frame to ready
+	while(!list_empty(&cam->done_q))
+	{
+		frame = list_entry(cam->done_q.next, struct mxc_v4l_frame, queue);
+		list_del(cam->done_q.next);
+		list_add_tail(&frame->queue, &cam->ready_q);
+		frame->ipu_buf_num = 0;
+		frame->buffer.flags = V4L2_BUF_FLAG_MAPPED | V4L2_BUF_FLAG_QUEUED;
+	}
+
+	//reupdate buffer to enc
+	if (cam->enc_update_eba) {
+		frame =
+			list_entry(cam->ready_q.next, struct mxc_v4l_frame, queue);
+		list_del(cam->ready_q.next);
+		list_add_tail(&frame->queue, &cam->working_q);
+		frame->ipu_buf_num = cam->ping_pong_csi;
+		err = cam->enc_update_eba(cam, frame->buffer.m.offset);
+
+		frame =
+			list_entry(cam->ready_q.next, struct mxc_v4l_frame, queue);
+		list_del(cam->ready_q.next);
+		list_add_tail(&frame->queue, &cam->working_q);
+		frame->ipu_buf_num = cam->ping_pong_csi;
+		err |= cam->enc_update_eba(cam, frame->buffer.m.offset);
+		spin_unlock(&cam->dqueue_int_lock);
+		spin_unlock_irqrestore(&cam->queue_int_lock, lock_flags);
+	} else {
+		spin_unlock(&cam->dqueue_int_lock);
+		spin_unlock_irqrestore(&cam->queue_int_lock, lock_flags);
+		return -EINVAL;
+	}
+
+	if (cam->enc_enable_csi) {
+		err = cam->enc_enable_csi(cam);
+		if (err != 0)
+			return err;
+	}
+
+	return err;
 }
 
 /*!
@@ -1222,13 +1321,24 @@ static int mxc_v4l2_s_ctrl(cam_data *cam, struct v4l2_control *c)
 		}
 		break;
 	case V4L2_CID_CONTRAST:
-		if (cam->sensor) {
-			cam->contrast = c->value;
-			ret = vidioc_int_s_ctrl(cam->sensor, c);
+		// if (cam->sensor) {
+		// 	cam->contrast = c->value;
+		// 	ret = vidioc_int_s_ctrl(cam->sensor, c);
+		// } else {
+		// 	pr_err("ERROR: v4l2 capture: slave not found!\n");
+		// 	ret = -ENODEV;
+		// }
+		//stan hack for chip input control
+		if (cam->sensor) {			
+			pr_err("DISPLAY: New contrast=%d!\n",c->value);
+			if(vidioc_int_s_chip_input(cam->sensor, &c->value)==0)
+				ret = mxc_v4l2_reset(cam);		
+			else
+				ret = 0;
 		} else {
 			pr_err("ERROR: v4l2 capture: slave not found!\n");
 			ret = -ENODEV;
-		}
+		}		
 		break;
 	case V4L2_CID_BRIGHTNESS:
 		if (cam->sensor) {
@@ -2030,98 +2140,7 @@ exit0:
 }
 #endif
 
-static int mxc_v4l2_reset(cam_data *cam)
-{
-	struct mxc_v4l_frame *frame;
-	unsigned long lock_flags;
-	int err = 0;
 
-	pr_debug("%s\n", __func__);
-	
-	//close stream
-	/* For both CSI--MEM and CSI--IC--MEM
-	* 1. wait for idmac eof
-	* 2. disable csi first
-	* 3. disable idmac
-	* 4. disable smfc (CSI--MEM channel)
-	*/
-	if (mxc_capture_inputs[cam->current_input].name != NULL) {
-		if (cam->enc_disable_csi) {
-			err = cam->enc_disable_csi(cam);
-			if (err != 0)
-				return err;
-		}
-		if (cam->enc_disable) {
-			err = cam->enc_disable(cam);
-			if (err != 0)
-				return err;
-		}
-	}
-
-	//clear counter
-	cam->enc_counter = 0;
-
-	// open stream
-	if (cam->enc_enable) {
-		err = cam->enc_enable(cam);
-		if (err != 0)
-			return err;
-	}
-
-	//reset buffer
-	spin_lock_irqsave(&cam->queue_int_lock, lock_flags);
-	cam->ping_pong_csi = 0;
-	cam->local_buf_num = 0;
-
-	//mv working frame to ready
-	while(!list_empty(&cam->working_q))
-	{
-		frame = list_entry(cam->working_q.next, struct mxc_v4l_frame, queue);
-		list_del(cam->working_q.next);
-		list_add_tail(&frame->queue, &cam->ready_q);
-		frame->ipu_buf_num = 0;
-		frame->buffer.flags = V4L2_BUF_FLAG_MAPPED | V4L2_BUF_FLAG_QUEUED;
-	}
-
-	//mv done frame to ready
-	while(!list_empty(&cam->done_q))
-	{
-		frame = list_entry(cam->done_q.next, struct mxc_v4l_frame, queue);
-		list_del(cam->done_q.next);
-		list_add_tail(&frame->queue, &cam->ready_q);
-		frame->ipu_buf_num = 0;
-		frame->buffer.flags = V4L2_BUF_FLAG_MAPPED | V4L2_BUF_FLAG_QUEUED;
-	}
-
-	//reupdate buffer to enc
-	if (cam->enc_update_eba) {
-		frame =
-			list_entry(cam->ready_q.next, struct mxc_v4l_frame, queue);
-		list_del(cam->ready_q.next);
-		list_add_tail(&frame->queue, &cam->working_q);
-		frame->ipu_buf_num = cam->ping_pong_csi;
-		err = cam->enc_update_eba(cam, frame->buffer.m.offset);
-
-		frame =
-			list_entry(cam->ready_q.next, struct mxc_v4l_frame, queue);
-		list_del(cam->ready_q.next);
-		list_add_tail(&frame->queue, &cam->working_q);
-		frame->ipu_buf_num = cam->ping_pong_csi;
-		err |= cam->enc_update_eba(cam, frame->buffer.m.offset);
-		spin_unlock_irqrestore(&cam->queue_int_lock, lock_flags);
-	} else {
-		spin_unlock_irqrestore(&cam->queue_int_lock, lock_flags);
-		return -EINVAL;
-	}
-
-	if (cam->enc_enable_csi) {
-		err = cam->enc_enable_csi(cam);
-		if (err != 0)
-			return err;
-	}
-
-	return err;
-}
 
 /*!
  * V4L interface - ioctl function
@@ -2654,8 +2673,25 @@ static long mxc_v4l_do_ioctl(struct file *file,
 		break;
 	}
 
-	case VIDIOC_TRY_FMT:
+
 	case VIDIOC_QUERYCTRL:
+	{
+		struct v4l2_queryctrl *queryControl = arg;
+		if(queryControl->id == V4L2_CID_CONTRAST)
+		{
+			queryControl->default_value = 0;
+			queryControl->minimum = 0;
+			queryControl->maximum = 3;
+			retval = 0;	
+		}
+		else
+		{
+			retval = -EINVAL;
+		}
+		break;
+	}
+
+	case VIDIOC_TRY_FMT:
 	case VIDIOC_G_TUNER:
 	case VIDIOC_S_TUNER:
 	case VIDIOC_G_FREQUENCY:
