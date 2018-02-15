@@ -2676,16 +2676,21 @@ static long mxc_v4l_do_ioctl(struct file *file,
 	case VIDIOC_QUERYCTRL:
 	{
 		struct v4l2_queryctrl *queryControl = arg;
-		if(queryControl->id == V4L2_CID_CONTRAST)
+		switch(queryControl->id)
 		{
-			queryControl->default_value = 0;
-			queryControl->minimum = 0;
-			queryControl->maximum = 3;
-			retval = 0;	
-		}
-		else
-		{
-			retval = -EINVAL;
+			case V4L2_CID_CONTRAST:
+			{
+				queryControl->default_value = 0;
+				queryControl->minimum = 0;
+				queryControl->maximum = 3;
+				retval = 0;	
+				break;
+			}			
+			default:
+			{
+				retval = vidioc_int_queryctrl(cam->sensor,queryControl);
+				break;
+			}
 		}
 		break;
 	}
