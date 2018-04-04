@@ -136,6 +136,7 @@ typedef struct _cam_data {
 	void *rot_enc_bufs_vaddr[2];
 	int rot_enc_buf_size[2];
 	enum v4l2_buf_type type;
+	int err_flag;
 
 	/* still image capture */
 	wait_queue_head_t still_queue;
@@ -192,6 +193,7 @@ typedef struct _cam_data {
 	int (*enc_enable_csi) (void *private);
 	int (*enc_disable_csi) (void *private);
 	void (*enc_callback) (u32 mask, void *dev);
+	void (*enc_err_callback) (u32 mask, void *dev);
 	int (*vf_start_adc) (void *private);
 	int (*vf_stop_adc) (void *private);
 	int (*vf_start_sdc) (void *private);

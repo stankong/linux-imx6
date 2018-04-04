@@ -56,6 +56,18 @@ static irqreturn_t vdi_enc_callback(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
+static irqreturn_t csi_enc_err_callback(int irq, void *dev_id)
+{
+	cam_data *cam = (cam_data *) dev_id;
+
+	if (cam->enc_err_callback == NULL)
+		return IRQ_HANDLED;
+
+	cam->enc_err_callback(irq, dev_id);
+	return IRQ_HANDLED;
+}
+
+
 /*!
  * CSI ENC enable channel setup function
  *
@@ -235,6 +247,14 @@ static int vdi_enc_enabling_tasks(void *private)
 			      vdi_enc_callback, 0, "Mxc Camera", cam);
 	if (err != 0) {
 		printk(KERN_ERR "Error registering rot irq\n");
+		return err;
+	}
+
+	//err zhongduan
+	err = ipu_request_err_irq(
+		cam->ipu, IPU_IRQ_VDIC_OUT_EOF, csi_enc_err_callback, 0, "Mxc Camera", cam);
+	if (err != 0) {
+		pr_err("%s: Error requesting csi_enc_err_callback\n", __func__);
 		return err;
 	}
 

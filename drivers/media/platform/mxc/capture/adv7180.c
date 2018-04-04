@@ -401,7 +401,7 @@ static void adv7180_detect_std(struct adv7180_priv *adv, unsigned long msec)
 static void adv7180_get_std(struct adv7180_priv *adv, v4l2_std_id *std)
 {
 	dev_dbg(&adv->sen.i2c_client->dev, "In adv7180_get_std\n");
-	adv7180_detect_std(adv, (adv->std_id == V4L2_STD_ALL) ? 2500 : 0);
+	adv7180_detect_std(adv, (adv->std_id == V4L2_STD_ALL) ? 10 : 0);
 	*std = adv->std_id;
 }
 
@@ -582,7 +582,7 @@ static int ioctl_g_fmt_cap(struct v4l2_int_device *s, struct v4l2_format *f)
 
 	switch (f->type) {
 	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
-		adv7180_detect_std(adv, (adv->std_id == V4L2_STD_ALL) ? 2500 : 0);
+		adv7180_detect_std(adv, (adv->std_id == V4L2_STD_ALL) ? 10 : 0);
 		pr_debug("   Returning size of %dx%d\n",
 			 adv->sen.pix.width, adv->sen.pix.height);
 		f->fmt.pix = adv->sen.pix;
@@ -919,7 +919,6 @@ static int ioctl_s_chip_input(struct v4l2_int_device *s, int *input)
 
 	// Sequence recommended by Analog Devices - ADV7180 Fast Switching
 	// https://ez.analog.com/docs/DOC-2643
-	// err,status1 = 0x42
 	adv7180_write_reg(adv, 0x14, 0x30);
 	adv7180_write_reg(adv, 0x0f, 0x40);
 	adv7180_write_reg(adv, 0x01, 0x80);
@@ -1305,7 +1304,7 @@ static void adv7180_hard_reset(struct adv7180_priv *adv)
 	if (adv->cvbs) {
 #if 1
 		/* Set CVBS input on AIN1 */
-		adv7180_write_reg(adv, ADV7180_INPUT_CTL, 0x00);
+		adv7180_write_reg(adv, ADV7180_INPUT_CTL, 0x04);
 #else
 		/* Set CVBS input on AIN2 */
 		adv7180_write_reg(adv, ADV7180_INPUT_CTL, 0x03);

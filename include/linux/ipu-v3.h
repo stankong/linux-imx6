@@ -694,6 +694,9 @@ void ipu_clear_irq(struct ipu_soc *ipu, uint32_t irq);
 int ipu_request_irq(struct ipu_soc *ipu, uint32_t irq,
 		    irqreturn_t(*handler) (int, void *),
 		    uint32_t irq_flags, const char *devname, void *dev_id);
+int ipu_request_err_irq(struct ipu_soc *ipu, uint32_t irq,
+		    irqreturn_t(*handler) (int, void *),
+		    uint32_t irq_flags, const char *devname, void *dev_id);
 void ipu_free_irq(struct ipu_soc *ipu, uint32_t irq, void *dev_id);
 bool ipu_get_irq_status(struct ipu_soc *ipu, uint32_t irq);
 void ipu_set_csc_coefficients(struct ipu_soc *ipu, ipu_channel_t channel, int32_t param[][3]);

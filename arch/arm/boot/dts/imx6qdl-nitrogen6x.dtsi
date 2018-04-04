@@ -165,7 +165,7 @@
 
 	chosen {
 		stdout-path = &uart1;
-		bootargs="noinitrd console=ttymxc0,115200 root=/dev/mmcblk3p2 rootwait ro quiet";
+		bootargs="noinitrd console=ttymxc0,115200 root=/dev/mmcblk3p2 rootwait ro ";// quiet";
 	};
 
 	clocks {

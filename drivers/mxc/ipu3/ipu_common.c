@@ -3093,10 +3093,20 @@ static irqreturn_t ipu_err_irq_handler(int irq, void *desc)
 			dev_warn(ipu->dev,
 				"IPU Warning - IPU_INT_STAT_%d = 0x%08X\n",
 				err_reg[i], int_stat);
-			/* Disable interrupts so we only get error once */
-			int_stat = ipu_cm_read(ipu, IPU_INT_CTRL(err_reg[i])) &
-					~int_stat;
-			ipu_cm_write(ipu, int_stat, IPU_INT_CTRL(err_reg[i]));
+			
+			if((ipu->irq_err_handler.handler != NULL) && (err_reg[i] == 5))
+			{
+				ipu->irq_err_handler.handler(int_stat,
+								ipu->irq_err_handler.
+								dev_id);
+			}
+			else
+			{
+				/* Disable interrupts so we only get error once */
+				int_stat = ipu_cm_read(ipu, IPU_INT_CTRL(err_reg[i])) &
+						~int_stat;
+				ipu_cm_write(ipu, int_stat, IPU_INT_CTRL(err_reg[i]));
+			}
 		}
 	}
 
@@ -3304,6 +3314,42 @@ out:
 	return ret;
 }
 EXPORT_SYMBOL(ipu_request_irq);
+
+
+int ipu_request_err_irq(struct ipu_soc *ipu, uint32_t irq,
+		    irqreturn_t(*handler) (int, void *),
+		    uint32_t irq_flags, const char *devname, void *dev_id)
+{
+	uint32_t reg;
+	unsigned long lock_flags;
+	int ret = 0;
+
+	BUG_ON(irq >= IPU_IRQ_COUNT);
+
+	_ipu_get(ipu);
+
+	spin_lock_irqsave(&ipu->int_reg_spin_lock, lock_flags);
+
+	// if (ipu->irq_err_handler.handler != NULL) {
+	// 	dev_err(ipu->dev,
+	// 		"handler already installed on irq %d\n", irq);
+	// 	ret = -EINVAL;
+	// 	goto out;
+	// }
+
+	ipu->irq_err_handler.handler = handler;
+	ipu->irq_err_handler.flags = irq_flags;
+	ipu->irq_err_handler.dev_id = dev_id;
+	ipu->irq_err_handler.name = devname;
+
+out:
+	spin_unlock_irqrestore(&ipu->int_reg_spin_lock, lock_flags);
+
+	_ipu_put(ipu);
+
+	return ret;
+}
+EXPORT_SYMBOL(ipu_request_err_irq);
 
 /*!
  * This function unregisters an interrupt handler for the specified interrupt

@@ -130,9 +130,9 @@ static struct v4l2_output mxc_capture_outputs[MXC_V4L2_CAPTURE_NUM_OUTPUTS] = {
 };
 
 static struct v4l2_input mxc_capture_inputs[MXC_V4L2_CAPTURE_NUM_INPUTS] = {
-	{
+		 {
 	 .index = 0,
-	 .name = "CSI MEM",
+	 .name = "CSI VDI MEM",
 	 .type = V4L2_INPUT_TYPE_CAMERA,
 	 .audioset = 0,
 	 .tuner = 0,
@@ -141,13 +141,14 @@ static struct v4l2_input mxc_capture_inputs[MXC_V4L2_CAPTURE_NUM_INPUTS] = {
 	 },
 	 {
 	 .index = 1,
-	 .name = "CSI VDI MEM",
+	 .name = "CSI MEM",
 	 .type = V4L2_INPUT_TYPE_CAMERA,
 	 .audioset = 0,
 	 .tuner = 0,
 	 .std = V4L2_STD_UNKNOWN,
 	 .status = V4L2_IN_ST_NO_POWER,
 	 },
+
 	{
 	 .index = 2,
 	 .name = "CSI VDI IC MEM",
@@ -415,13 +416,58 @@ static inline int valid_mode(u32 palette)
 		(palette == V4L2_PIX_FMT_NV12));
 }
 
+/*!
+ * This function is called to put the sensor in a low power state.
+ * Refer to the document driver-model/driver.txt in the kernel source tree
+ * for more information.
+ *
+ * @param   pdev  the device structure used to give information on which I2C
+ *                to suspend
+ * @param   state the power state the device is entering
+ *
+ * @return  The function returns 0 on success and -1 on failure.
+ */
+static int mxc_v4l2_reset2(cam_data *cam)
+{
+	printk("%s\n", __func__);
+
+	if (cam == NULL)
+		return -1;
+
+	down(&cam->busy_lock);
+
+	if (cam->overlay_on == true)
+		stop_preview(cam);
+	if (cam->capture_on == true) {
+		if (cam->enc_disable_csi)
+			cam->enc_disable_csi(cam);
+
+		if (cam->enc_disable)
+			cam->enc_disable(cam);
+	}
+
+	if (cam->overlay_on == true)
+		start_preview(cam);
+	if (cam->capture_on == true) {
+		if (cam->enc_enable)
+			cam->enc_enable(cam);
+
+		if (cam->enc_enable_csi)
+			cam->enc_enable_csi(cam);
+	}
+
+	up(&cam->busy_lock);
+
+	return 0;
+}
+
 static int mxc_v4l2_reset(cam_data *cam)
 {
 	struct mxc_v4l_frame *frame;
 	unsigned long lock_flags;
 	int err = 0;
 
-	pr_debug("%s\n", __func__);
+	printk("%s\n", __func__);
 	
 	//close stream
 	/* For both CSI--MEM and CSI--IC--MEM
@@ -453,7 +499,6 @@ static int mxc_v4l2_reset(cam_data *cam)
 	//reset buffer
 	spin_lock_irqsave(&cam->queue_int_lock, lock_flags);
 	spin_lock(&cam->dqueue_int_lock);
-
 
 	//clear counter
 	cam->enc_counter = 0;
@@ -496,6 +541,7 @@ static int mxc_v4l2_reset(cam_data *cam)
 		list_add_tail(&frame->queue, &cam->working_q);
 		frame->ipu_buf_num = cam->ping_pong_csi;
 		err |= cam->enc_update_eba(cam, frame->buffer.m.offset);
+
 		spin_unlock(&cam->dqueue_int_lock);
 		spin_unlock_irqrestore(&cam->queue_int_lock, lock_flags);
 	} else {
@@ -1132,8 +1178,8 @@ static int mxc_v4l2_g_ctrl(cam_data *cam, struct v4l2_control *c)
 	case V4L2_CID_CONTRAST:
 		if (cam->sensor) {
 			c->value = cam->contrast;
-			status = vidioc_int_g_ctrl(cam->sensor, c);
-			cam->contrast = c->value;
+			//status = vidioc_int_g_ctrl(cam->sensor, c);
+			//cam->contrast = c->value;
 		} else {
 			pr_err("ERROR: v4l2 capture: slave not found!\n");
 			status = -ENODEV;
@@ -1327,13 +1373,16 @@ static int mxc_v4l2_s_ctrl(cam_data *cam, struct v4l2_control *c)
 		// 	pr_err("ERROR: v4l2 capture: slave not found!\n");
 		// 	ret = -ENODEV;
 		// }
+
 		//stan hack for chip input control
 		if (cam->sensor) {			
-			pr_err("DISPLAY: New contrast=%d!\n",c->value);
-			if(vidioc_int_s_chip_input(cam->sensor, &c->value)==0)
-				ret = mxc_v4l2_reset(cam);		
-			else
-				ret = 0;
+			pr_err("DISPLAY: New input = %d!\n",c->value);
+			cam->contrast = c->value;
+			if(vidioc_int_s_chip_input(cam->sensor, &(c->value))==0)
+			{				
+				cam->err_flag = 2;					
+			}
+			ret = 0;
 		} else {
 			pr_err("ERROR: v4l2 capture: slave not found!\n");
 			ret = -ENODEV;
@@ -1733,6 +1782,7 @@ static int mxc_v4l_dqueue(cam_data *cam, struct v4l2_buffer *buf)
 
 	pr_debug("%s\n", __func__);
 
+ stan_start:
 	if (!wait_event_interruptible_timeout(cam->enc_queue,
 					      cam->enc_counter != 0,
 					      10 * HZ)) {
@@ -1746,8 +1796,30 @@ static int mxc_v4l_dqueue(cam_data *cam, struct v4l2_buffer *buf)
 		return -ERESTARTSYS;
 	}
 
+
+
 	if (down_interruptible(&cam->busy_lock))
 		return -EBUSY;
+
+	// if(cam->err_flag)
+	// {		
+	// 	cam->err_flag --;
+	// 	if(cam->err_flag == 0)
+	// 	{
+	// 		mxc_v4l2_reset(cam);
+	// 		cam->err_flag = 0;
+	// 		up(&cam->busy_lock);
+	// 		goto stan_start;
+	// 	}
+	// }
+
+	if(cam->err_flag == 1)
+	{		
+		mxc_v4l2_reset(cam);
+		cam->err_flag = 0;
+		up(&cam->busy_lock);
+		goto stan_start;
+	}
 
 	spin_lock_irqsave(&cam->dqueue_int_lock, lock_flags);
 	cam->enc_counter--;
@@ -2664,12 +2736,22 @@ static long mxc_v4l_do_ioctl(struct file *file,
 	}
 
 	case VIDIOC_S_CHIP_INPUT: {
-		int *input = arg;
-		if(vidioc_int_s_chip_input(cam->sensor, input)==0)
-			retval = mxc_v4l2_reset(cam);		
+		//0-4,超过的报错，0-av5，1-4 av1-av4
+		int input = *(int *)arg;
+		if((input < 0)||( input>4 ))
+		{
+			pr_err("ERROR: ADV7180 input not err!\n");
+			retval = -EINVAL;
+		}
 		else
-			retval = 0;				
-		break;
+		{
+			input = (input == 0) ? 4:(input-1);
+			if(vidioc_int_s_chip_input(cam->sensor, &input)==0)
+				retval = mxc_v4l2_reset(cam);		
+			else
+				retval = 0;	
+		}			
+		break;		
 	}
 
 
@@ -2903,6 +2985,32 @@ next:
 	return;
 }
 
+//错误中断处理函数，会置位标示，在适当的时候复位整个采集流程
+static void camera_err_callback(u32 mask, void *dev)
+{
+
+	cam_data *cam = (cam_data *) dev;
+	if (cam == NULL)
+		return;
+
+	pr_debug("%s\n", __func__);
+	printk("camera_err_callback %d\n",mask);
+
+	spin_lock(&cam->queue_int_lock);
+	spin_lock(&cam->dqueue_int_lock);
+	//set err flag;
+	cam->err_flag = 1; 
+
+	//wake up to reset ipu;
+	cam->enc_counter++;
+	wake_up_interruptible(&cam->enc_queue);
+
+	spin_unlock(&cam->dqueue_int_lock);
+	spin_unlock(&cam->queue_int_lock);
+
+	return;
+}
+
 /*!
  * initialize cam_data structure
  *
@@ -3037,7 +3145,9 @@ static int init_camera_struct(cam_data *cam, struct platform_device *pdev)
 	cam->mclk_source = mclk_source;
 	cam->mclk_on[cam->mclk_source] = false;
 
+	cam->err_flag = 0;
 	cam->enc_callback = camera_callback;
+	cam->enc_err_callback = camera_err_callback;
 	init_waitqueue_head(&cam->power_queue);
 	spin_lock_init(&cam->queue_int_lock);
 	spin_lock_init(&cam->dqueue_int_lock);
